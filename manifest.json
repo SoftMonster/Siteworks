@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Site Works",
+  "version": "1.2.0",
+  "description": "Runs your own scripts on websites, picked by folder, and only after you allow each script on each website.",
+  "minimum_chrome_version": "106",
+  "permissions": ["scripting", "webNavigation", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "options_ui": { "page": "manage.html", "open_in_tab": true },
+  "action": { "default_title": "Site Works", "default_popup": "popup.html" }
+}

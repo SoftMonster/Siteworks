@@ -1,0 +1,33 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Site Works — script request</title>
+<style>
+  :root{--bg:#1b2838;--panel:#16202d;--line:#2a475e;--text:#c6d4df;--dim:#7a8a99;--blue:#66c0f4;--green:#5c7e10;--red:#a33;--amber:#e5b84b}
+  *{box-sizing:border-box}
+  body{margin:0;padding:16px 18px;background:var(--bg);color:var(--text);font:13px/1.5 "Segoe UI",Arial,sans-serif}
+  .brand{font-size:11px;letter-spacing:.12em;color:var(--blue);font-weight:bold}
+  h1{margin:2px 0 4px;font-size:15px;color:#fff;font-weight:600}
+  .host{font-size:18px;color:#fff;font-weight:bold;word-break:break-all}
+  .url{color:var(--dim);font-size:11px;word-break:break-all;margin-bottom:10px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px;margin:10px 0}
+  .lbl{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+  .path{color:#fff;font-weight:600;word-break:break-all;margin-bottom:6px}
+  .why{display:inline-block;font-size:11px;padding:1px 6px;border-radius:3px;margin-bottom:6px}
+  .why.new{background:#2a475e;color:#fff} .why.changed{background:#6b4a00;color:#ffd98a}
+  .meta{color:var(--dim);font-size:11px;margin:4px 0 8px} .meta a{color:var(--blue)}
+  .btns{display:flex;gap:8px;margin-top:8px}
+  button{flex:1;border:0;border-radius:5px;padding:8px 6px;color:#fff;cursor:pointer;font:inherit;line-height:1.25}
+  button b{display:block;font-size:13px;letter-spacing:.04em} button span{font-size:11px;opacity:.85}
+  .allow{background:var(--green)} .allow:hover{background:#6f9a12} .reject{background:var(--red)} .reject:hover{background:#c03b3b}
+  button:disabled{opacity:.5;cursor:default}
+  label.rem{display:flex;gap:8px;align-items:flex-start;margin-top:8px;cursor:pointer}
+  label.rem input{margin-top:3px} label.rem small{display:block;color:var(--dim)}
+  .all{border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
+  .foot{color:var(--dim);font-size:11px;margin-top:10px}
+  .empty{padding:30px 0;text-align:center;color:var(--dim)}
+</style></head>
+<body>
+  <div class="brand">SITE WORKS — SCRIPT REQUEST</div>
+  <div id="root"><div class="empty">Loading…</div></div>
+  <div class="foot">Allow and Reject apply to this page load only, unless “Do not ask again” is ticked. Closing this window rejects for this page. Review or revoke saved decisions in Manage.</div>
+  <script src="prompt.js"></script>
+</body></html>

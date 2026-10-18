@@ -1,0 +1,38 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Site Works — permissions</title>
+<style>
+  :root{--bg:#1b2838;--panel:#16202d;--line:#2a475e;--text:#c6d4df;--dim:#7a8a99;--blue:#66c0f4;--ok:#a4d007;--bad:#e06c5b;--amber:#e5b84b}
+  *{box-sizing:border-box}
+  body{margin:0;padding:24px 16px;background:var(--bg);color:var(--text);font:13px/1.5 "Segoe UI",Arial,sans-serif}
+  main{max-width:1000px;margin:0 auto}
+  h1{margin:0;font-size:20px;color:#fff} h2{margin:26px 0 8px;font-size:13px;color:var(--blue);text-transform:uppercase;letter-spacing:.05em}
+  p.dim,.dim{color:var(--dim)}
+  .wrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow-x:auto}
+  table{width:100%;border-collapse:collapse} th{text-align:left;color:#8fa3b5;background:#1b2838;padding:7px 10px;white-space:nowrap;font-weight:600}
+  td{padding:6px 10px;border-top:1px solid #1f2f40;vertical-align:top} td.f{word-break:break-all}
+  .allow{color:var(--ok);font-weight:bold} .block{color:var(--bad);font-weight:bold} .warn{color:var(--amber)}
+  button{background:#2a475e;color:#fff;border:0;border-radius:4px;padding:4px 10px;cursor:pointer;font:inherit;font-size:12px;white-space:nowrap}
+  button:hover{background:#3a5f7c} button.danger{background:#7a2626} button.danger:hover{background:#a33}
+  .bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 8px}
+  input[type=search]{background:#0e1620;color:var(--text);border:1px solid var(--line);border-radius:4px;padding:5px 8px;min-width:240px;font:inherit}
+  .empty{padding:14px 10px;color:var(--dim)}
+  .ev-ran{color:var(--ok)} .ev-blocked,.ev-failed,.ev-rejected{color:var(--bad)} .ev-always{color:var(--blue)}
+</style></head>
+<body><main>
+  <h1>Site Works — permissions</h1>
+  <p class="dim">No script runs until you allow it on a website. Decisions are saved against the script <em>and</em> the website. An “always allow” is tied to the script's exact contents: if the file changes, Site Works asks again.</p>
+
+  <h2>Remembered decisions</h2>
+  <div class="bar"><button id="forget" class="danger">Forget all decisions</button></div>
+  <div class="wrap"><table><thead><tr><th>Website</th><th>Script</th><th>Decision</th><th>Since</th><th>Current file</th><th></th></tr></thead><tbody id="perms"></tbody></table></div>
+
+  <h2>Scripts in your sites folder</h2>
+  <div class="wrap"><table><thead><tr><th>Script</th><th>Allowed on</th><th>Blocked on</th></tr></thead><tbody id="scripts"></tbody></table></div>
+  <p class="dim" id="built"></p>
+
+  <h2>Log</h2>
+  <div class="bar"><input type="search" id="filter" placeholder="Filter by website, script or event"><button id="clear" class="danger">Clear log</button><span class="dim" id="count"></span></div>
+  <div class="wrap"><table><thead><tr><th>When</th><th>Website</th><th>Script</th><th>Event</th><th>Detail</th></tr></thead><tbody id="log"></tbody></table></div>
+</main>
+<script src="manage.js"></script>
+</body></html>

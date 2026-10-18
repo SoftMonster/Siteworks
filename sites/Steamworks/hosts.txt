@@ -1,0 +1,4 @@
+# Steamworks: the scripts in this folder run on these sites (one per line;
+# subdomains are included, so steampowered.com covers store.steampowered.com).
+steamcommunity.com
+steampowered.com
