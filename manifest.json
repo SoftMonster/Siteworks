@@ -1,12 +1,56 @@
 {
   "manifest_version": 3,
   "name": "Site Works",
-  "version": "1.2.0",
-  "description": "Runs your own scripts on websites, picked by folder, and only after you allow each script on each website.",
+  "version": "1.3.0",
+  "description": "Runs your own scripts on websites, picked by folder, only after you allow each one. Includes a script editor, file helper, clipboard tool and cross-site toolbox.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwm4vkWrEoHvrG7Xqp33S5ifUIpnvG8tC+U19uSLbClHoVX74BcUX6qkTjeD0qe/j6RJ51x3Z47AY5GjQtrdv7qF/VYd1NzbcTbqxriUheIL7X9xhM7SS1OvOm4OhDj10mGyhLdsvBor+Wf3vvWUL0uGSFOGvM0mfBs5jgsNhf7Muq/rUnCzSEFQhmUwPaHEiQ2y1ob/ErDYbSCLDYyPDHcUHqcSuVy7soWAw35hIqk/asg1BKTqO21kjceMkLeVVKYb2yd7tdiuUj1w8LGLgsXMApwPAicJPwGypcwpvoh4xEFTQxDhX2rkFbyT4xmDEH/hzfexYJut6XrOSOYYRRQIDAQAB",
   "minimum_chrome_version": "106",
-  "permissions": ["scripting", "webNavigation", "storage"],
-  "host_permissions": ["<all_urls>"],
-  "background": { "service_worker": "background.js" },
-  "options_ui": { "page": "manage.html", "open_in_tab": true },
-  "action": { "default_title": "Site Works", "default_popup": "popup.html" }
+  "permissions": [
+    "scripting",
+    "webNavigation",
+    "storage",
+    "contextMenus",
+    "nativeMessaging",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "options_ui": {
+    "page": "manage.html",
+    "open_in_tab": true
+  },
+  "action": {
+    "default_title": "Site Works",
+    "default_popup": "popup.html"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+W"
+      },
+      "description": "Open the Site Works menu"
+    },
+    "open-toolbox": {
+      "suggested_key": {
+        "default": "Alt+Shift+K"
+      },
+      "description": "Open the toolbox on this page"
+    },
+    "toggle-pause": {
+      "suggested_key": {
+        "default": "Alt+Shift+P"
+      },
+      "description": "Pause or resume Site Works on this website"
+    },
+    "toggle-enabled": {
+      "description": "Turn Site Works on or off everywhere"
+    },
+    "new-script": {
+      "description": "New script for this page"
+    }
+  }
 }

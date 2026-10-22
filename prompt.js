@@ -6,14 +6,15 @@ const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls)
 let busy = false, current = null;
 const ticked = {};   // keeps "Do not ask again" ticks when the list redraws
 
-function send(file, allow, remember) {
-  return new Promise((res) => chrome.runtime.sendMessage({ siteWorks: "decide", tabId, docId: current.docId, file, allow, remember }, () => res()));
+const scopeOf = {};  // "site" | "all" per script
+function send(file, allow, remember, scope) {
+  return new Promise((res) => chrome.runtime.sendMessage({ siteWorks: "decide", tabId, docId: current.docId, file, allow, remember, scope }, () => res()));
 }
 
 async function decide(files, allow, rememberOf) {
   if (busy) return; busy = true;
   document.querySelectorAll("button").forEach((b) => { b.disabled = true; });
-  for (const f of files) await send(f, allow, rememberOf(f));
+  for (const f of files) await send(f, allow, rememberOf(f), scopeOf[f] || "site");
   busy = false; render();
 }
 
@@ -37,13 +38,21 @@ function render() {
       const a = el("a", null, "view code"); a.href = chrome.runtime.getURL("sites/" + s.file); a.target = "_blank"; meta.append(a);
       c.append(meta);
       const rem = el("label", "rem"), cb = el("input"); cb.type = "checkbox"; boxes[s.file] = cb;
-      const txt = el("span"); txt.append(el("b", null, "Do not ask again")); txt.append(el("small", null, "Remember the decision for this script on " + req.host + "."));
+      const txt = el("span"); txt.append(el("b", null, "Do not ask again"));
+      const sc = el("select"); sc.className = "scope";
+      sc.append(new Option("on " + req.host + " only", "site"), new Option("on every website", "all"));
+      sc.value = scopeOf[s.file] || "site";
+      sc.onclick = (e) => { e.preventDefault(); e.stopPropagation(); };
+      sc.onchange = () => { scopeOf[s.file] = sc.value; cb.checked = true; ticked[s.file] = true; label(); };
+      const sm = el("small", null, "Remember the decision for this script "); sm.append(sc);
+      txt.append(sm);
       rem.append(cb, txt);
       const btns = el("div", "btns");
       const ok = el("button", "allow"), no = el("button", "reject");
       const label = () => {
-        ok.innerHTML = "<b>ALLOW</b><span></span>"; ok.lastChild.textContent = cb.checked ? "Always run here" : "Run this time";
-        no.innerHTML = "<b>REJECT</b><span></span>"; no.lastChild.textContent = cb.checked ? "Always block here" : "Do not run this time";
+        const where = sc.value === "all" ? " everywhere" : " here";
+        ok.innerHTML = "<b>ALLOW</b><span></span>"; ok.lastChild.textContent = cb.checked ? "Always run" + where : "Run this time";
+        no.innerHTML = "<b>REJECT</b><span></span>"; no.lastChild.textContent = cb.checked ? "Always block" + where : "Do not run this time";
       };
       cb.checked = !!ticked[s.file];
       cb.onchange = () => { ticked[s.file] = cb.checked; label(); }; label();

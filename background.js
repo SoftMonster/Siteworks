@@ -1,99 +1,38 @@
 // Site Works - background service worker.
 //
-//   sites\<Site>\<A>\<B>\...\*.js
-//
-// Level 1 - the site. sites\Steamworks\ applies to the hosts listed in its
-// hosts.txt (steamcommunity.com, steampowered.com; subdomains included). A site
-// folder without hosts.txt matches hosts that contain its name as one part:
-// sites\Google\ matches www.google.com, mail.google.com, google.co.uk... A site
-// folder whose name has a dot (sites\github.com\) is that host name.
-// Files directly in sites\<Site>\ run on every page of that site; files directly
-// in sites\ run on every page of every website.
-//
-// Levels 2+ - the URL path. A script in sites\<Site>\A\B\C\ runs when the URL's
-// path contains A, B and C in that order (other parts may sit between them).
-// A level-2 folder named after a host the site covers narrows to that host
-// (sites\Steamworks\store.steampowered.com\app\); any other name, even one with
-// a dot such as index.html, is an ordinary path part. Matching ignores case.
+//   sites\<Site>\<A>\<B>\...\*.js        (matching rules: see match.js / README)
 //
 // PERMISSION GATE. No script runs until it has a decision:
-//   - Every matching script is checked against the saved decisions for
-//     (website host, script path) immediately before it is injected.
+//   - Every matching script is checked against the saved decisions immediately
+//     before it is injected: first for (this website, script), then for
+//     (every website, script). A decision for this website wins.
 //   - "Always allow" is tied to the script's SHA-256: if the file changes, it
 //     asks again. "Always block" holds whatever the file contains.
-//   - Anything else - a new script, a new website, a changed file - opens the
-//     Site Works request window (an extension window the page cannot see or
-//     click). Allow / Reject there apply to this page load only unless
-//     "Do not ask again" is ticked. Closing the window rejects for this page.
-//   - Every decision and every run is written to the log (Manage page).
-// Per-page state (what ran, what was rejected) lives in the extension's own
-// isolated world in the page, so the website's scripts cannot read or change it.
+//   - Anything else opens the Site Works request window (an extension window the
+//     page cannot see or click). Closing it rejects for this page.
+//   - Every decision and run is logged (Manage page).
+// MASTER SWITCH AND PAUSE. Site Works can be turned off everywhere, or paused on
+// a website; then nothing new runs there (scripts already running in a page
+// keep running until it reloads).
+// Per-page state lives in the extension's isolated world, out of the page's reach.
 //
-// Each script runs at most ONCE per page load, inside the page (as if pasted
-// into the Console). When the URL changes without a new page (#hash, history),
-// newly matching scripts are checked and added; ones already handled are left
-// alone. Shallower folders run first; within a folder, files run in name order.
-//
-// Browsers don't let an extension list its own folders, so the list comes from
-// sites\index.json, written by "Rebuild index.cmd". Run it after adding,
-// renaming or removing scripts or editing hosts.txt; no extension reload needed.
+// Privileged controls (on/off, decisions, the file helper) are only reachable
+// from Site Works' own pages, menus and shortcuts - never from a website or a
+// script running in one.
+
+importScripts("match.js");
 
 const PROMPT = "prompt.html";
+const TOOLBOX = "00-toolbox.js";        // sites\00-toolbox.js, opened by Alt+Shift+K / the right-click menu
 const LOG_MAX = 1000;
-
-// ---------------------------------------------------------------- index + matching
-
-async function loadIndex() {
-  try {
-    const r = await fetch(chrome.runtime.getURL("sites/index.json") + "?t=" + Date.now(), { cache: "no-store" });
-    if (r.ok) {
-      const o = await r.json();
-      let files = o && o.files; if (typeof files === "string") files = [files];
-      const sites = (o && o.sites && typeof o.sites === "object") ? o.sites : {};
-      return { built: (o && o.built) || "", sites, files: Array.isArray(files) ? files.filter((f) => typeof f === "string" && /\.js$/i.test(f) && !f.split("/").includes("..")) : [] };
-    }
-  } catch (e) {}
-  return { built: "", sites: {}, files: [], missing: true };
-}
-
-function urlParts(url) {
-  const u = new URL(url);
-  const segs = u.pathname.split("/").filter(Boolean).map((s) => { try { return decodeURIComponent(s).toLowerCase(); } catch (e) { return s.toLowerCase(); } });
-  return { host: u.hostname.toLowerCase(), segs };
-}
-const hostIs = (host, h) => { h = String(h).trim().toLowerCase().replace(/^\*\./, "").replace(/^https?:\/\//, "").replace(/\/.*$/, ""); return !!h && (host === h || host.endsWith("." + h)); };
-
-function siteMatches(site, idx, host) {
-  const info = idx.sites[site] || idx.sites[Object.keys(idx.sites).find((k) => k.toLowerCase() === site.toLowerCase())] || {};
-  const hosts = Array.isArray(info.hosts) ? info.hosts.filter(Boolean) : [];
-  if (hosts.length) return hosts.some((h) => hostIs(host, h));
-  if (site.includes(".")) return hostIs(host, site);
-  return host.split(".").includes(site.toLowerCase());
-}
-
-// folder: ["id", "inventory"] -> true when the path holds those parts in that order.
-// A first part that is a host covered by the site narrows to that host instead.
-function pathMatches(site, idx, folder, host, segs) {
-  let f = folder.map((s) => s.toLowerCase());
-  if (f.length && f[0].includes(".") && siteMatches(site, idx, f[0])) { if (!hostIs(host, f[0])) return false; f = f.slice(1); }
-  let i = 0;
-  for (const s of segs) if (i < f.length && s === f[i]) i++;
-  return i === f.length;
-}
-
-function matchingScripts(idx, url) {
-  let p; try { p = urlParts(url); } catch (e) { return []; }
-  return idx.files.filter((f) => {
-    const parts = f.split("/");
-    if (parts.length === 1) return true;                                   // sites\*.js: every website
-    return siteMatches(parts[0], idx, p.host) && pathMatches(parts[0], idx, parts.slice(1, -1), p.host, p.segs);
-  }).sort((a, b) => a.split("/").length - b.split("/").length || a.localeCompare(b));
-}
 
 // ---------------------------------------------------------------- storage helpers
 
-const permKey = (host, file) => host + "|" + file;
 async function getPerms() { return (await chrome.storage.local.get("perms")).perms || {}; }
+async function getSettings() {
+  const o = await chrome.storage.local.get(["enabled", "paused"]);
+  return { enabled: o.enabled !== false, paused: Array.isArray(o.paused) ? o.paused : [] };
+}
 
 let permChain = Promise.resolve();
 function updatePerms(fn) {
@@ -116,34 +55,20 @@ const reqKey = (tabId) => "req:" + tabId;
 async function getReq(tabId) { return (await chrome.storage.session.get(reqKey(tabId)))[reqKey(tabId)] || null; }
 async function allReqs() { const all = await chrome.storage.session.get(null); return Object.keys(all).filter((k) => k.startsWith("req:")).map((k) => all[k]); }
 
-async function scriptHash(file) {
-  const r = await fetch(chrome.runtime.getURL("sites/" + file) + "?t=" + Date.now(), { cache: "no-store" });
-  if (!r.ok) throw new Error("file not found");
-  const d = new Uint8Array(await crypto.subtle.digest("SHA-256", await r.arrayBuffer()));
-  return Array.from(d, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-// "block" | "allow" | "changed" (allowed, but the file has changed since) | "new"
-function verdict(perms, host, file, hash) {
-  const p = perms[permKey(host, file)];
-  if (p && p.d === "block") return "block";
-  if (p && p.d === "allow") return p.hash === hash ? "allow" : "changed";
-  return "new";
-}
-
 // ---------------------------------------------------------------- per-page state (isolated world)
-// window.__siteWorks[file] = { s: "pending" | "waiting" | "ran" | "rejected" | "blocked" | "failed", t }
+// globalThis.__siteWorks[file] = { s: "pending" | "waiting" | "ran" | "rejected" | "blocked" | "failed", t }
 
 async function inPage(ctx, func, args) {
   const [res] = await chrome.scripting.executeScript({ target: { tabId: ctx.tabId, documentIds: [ctx.docId] }, world: "ISOLATED", func, args: args || [] });
   return res && res.result;
 }
-// Claims the scripts this page hasn't handled yet (failed ones get another go), in one step,
-// so two quick URL changes can never handle a script twice.
-const claim = (ctx, list) => inPage(ctx, (l) => {
+// Claims the scripts this page hasn't handled yet, in one step, so two quick URL changes can
+// never handle a script twice. Failed ones get another go; so do ones left "waiting" when
+// their request was dropped (Site Works turned off and on again).
+const claim = (ctx, list, reclaimWaiting) => inPage(ctx, (l, rw) => {
   const L = globalThis.__siteWorks || (globalThis.__siteWorks = {});
-  const out = l.filter((f) => !L[f] || L[f].s === "failed"); out.forEach((f) => { L[f] = { s: "pending", t: Date.now() }; }); return out;
-}, [list]);
+  const out = l.filter((f) => !L[f] || L[f].s === "failed" || (rw && L[f].s === "waiting")); out.forEach((f) => { L[f] = { s: "pending", t: Date.now() }; }); return out;
+}, [list, !!reclaimWaiting]);
 const mark = (ctx, files, s) => inPage(ctx, (l, st) => {
   const L = globalThis.__siteWorks || (globalThis.__siteWorks = {}); l.forEach((f) => { L[f] = { s: st, t: Date.now() }; });
 }, [files, s]).catch(() => {});
@@ -151,6 +76,11 @@ const pageStateOf = (ctx) => inPage(ctx, () => globalThis.__siteWorks || {}).cat
 
 async function docOf(tabId) {
   try { const f = await chrome.webNavigation.getFrame({ tabId, frameId: 0 }); return (f && f.documentId) || null; } catch (e) { return null; }
+}
+async function ctxOf(tab) {
+  if (!tab || !/^https?:/.test(tab.url || "")) return null;
+  const docId = await docOf(tab.id); if (!docId) return null;
+  return { tabId: tab.id, docId, url: tab.url, host: SW.urlParts(tab.url).host };
 }
 
 // ---------------------------------------------------------------- the gate
@@ -165,20 +95,23 @@ async function apply(tabId, url, docId) {
   if (!url || !/^https?:/.test(url)) return;
   docId = docId || await docOf(tabId);
   if (!docId) return;
-  let host; try { host = urlParts(url).host; } catch (e) { return; }
+  let host; try { host = SW.urlParts(url).host; } catch (e) { return; }
   const ctx = { tabId, docId, url, host };
-  const idx = await loadIndex();
-  const want = matchingScripts(idx, url);
-  if (!want.length) { await refreshBadge(ctx); return; }
+  const set = await getSettings();
+  if (!set.enabled || SW.isPaused(set.paused, host)) { await refreshBadge(ctx, set); return; }
+  const idx = await SW.loadIndex();
+  const want = SW.matchingScripts(idx, url);
+  if (!want.length) { await refreshBadge(ctx, set); return; }
   let claimed;
-  try { claimed = (await claim(ctx, want)) || []; } catch (e) { return; }  // tab closed, navigated away, or a page the browser protects
+  const req = await getReq(tabId);
+  try { claimed = (await claim(ctx, want, !req || req.docId !== docId)) || []; } catch (e) { return; }  // tab closed, navigated away, or a page the browser protects
   const perms = await getPerms(), ask = [];
   for (const file of claimed) {
     let hash;
-    try { hash = await scriptHash(file); }
-    catch (e) { await mark(ctx, [file], "failed"); log({ host, url, file, ev: "failed", note: "listed in index.json but the file is missing - run Rebuild index.cmd" }); continue; }
-    const v = verdict(perms, host, file, hash);
-    if (v === "block") { await mark(ctx, [file], "blocked"); log({ host, url, file, ev: "blocked", note: "always blocked on this website" }); }
+    try { hash = await SW.scriptHash(file); }
+    catch (e) { await mark(ctx, [file], "failed"); log({ host, url, file, ev: "failed", note: "listed in index.json but the file is missing - rebuild the index" }); continue; }
+    const v = SW.verdict(perms, host, file, hash);
+    if (v === "block") { await mark(ctx, [file], "blocked"); log({ host, url, file, ev: "blocked", note: perms[SW.permKey(host, file)] ? "always blocked on this website" : "always blocked on every website" }); }
     else if (v === "allow") await run(ctx, file, hash, false);
     else ask.push({ file, hash, reason: v });
   }
@@ -187,22 +120,23 @@ async function apply(tabId, url, docId) {
 }
 
 // Final check immediately before execution, then inject.
-async function run(ctx, file, approvedHash, once) {
+async function run(ctx, file, approvedHash, once, how) {
+  const set = await getSettings();
+  if (!set.enabled || SW.isPaused(set.paused, ctx.host)) { await mark(ctx, [file], "rejected"); return; }
   let hash;
-  try { hash = await scriptHash(file); } catch (e) { await mark(ctx, [file], "failed"); log({ host: ctx.host, url: ctx.url, file, ev: "failed", note: "file missing" }); return; }
+  try { hash = await SW.scriptHash(file); } catch (e) { await mark(ctx, [file], "failed"); log({ host: ctx.host, url: ctx.url, file, ev: "failed", note: "file missing" }); return; }
   if (hash !== approvedHash) { await request(ctx, [{ file, hash, reason: "changed" }]); return; }
-  if (!once && verdict(await getPerms(), ctx.host, file, hash) !== "allow") { await request(ctx, [{ file, hash, reason: "new" }]); return; }
+  if (!once && SW.verdict(await getPerms(), ctx.host, file, hash) !== "allow") { await request(ctx, [{ file, hash, reason: "new" }]); return; }
   try {
     await chrome.scripting.executeScript({ target: { tabId: ctx.tabId, documentIds: [ctx.docId] }, world: "MAIN", files: ["sites/" + file] });
     await mark(ctx, [file], "ran");
-    log({ host: ctx.host, url: ctx.url, file, ev: "ran", note: once ? "allowed this time" : "always allowed" });
+    log({ host: ctx.host, url: ctx.url, file, ev: "ran", note: how || (once ? "allowed this time" : "always allowed") });
   } catch (e) {
     await mark(ctx, [file], "failed");
     log({ host: ctx.host, url: ctx.url, file, ev: "failed", note: (e && e.message) || String(e) });
   }
 }
 
-// Add scripts to this tab's pending request and show the request window.
 async function request(ctx, items) {
   let req = await getReq(ctx.tabId);
   if (!req || req.docId !== ctx.docId) req = { tabId: ctx.tabId, docId: ctx.docId, url: ctx.url, host: ctx.host, scripts: [], windowId: req ? req.windowId : null };
@@ -213,16 +147,13 @@ async function request(ctx, items) {
   await showPrompt(req, false);
 }
 
-// Opens the request window, or brings it forward if it's already open. Unless forced
-// (popup's Review button) it only opens for the tab you're looking at; background tabs
-// wait with a "?" badge until you switch to them.
 async function showPrompt(req, force) {
   if (req.windowId != null) {
     try { await chrome.windows.get(req.windowId); if (force) await chrome.windows.update(req.windowId, { focused: true, drawAttention: true }); return; } catch (e) {}
   }
   if (!force) { try { if (!(await chrome.tabs.get(req.tabId)).active) return; } catch (e) { return; } }
-  const h = Math.min(720, 250 + 170 * req.scripts.length);
-  const w = await chrome.windows.create({ url: chrome.runtime.getURL(PROMPT) + "?tab=" + req.tabId, type: "popup", width: 500, height: h, focused: true });
+  const h = Math.min(760, 270 + 190 * req.scripts.length);
+  const w = await chrome.windows.create({ url: chrome.runtime.getURL(PROMPT) + "?tab=" + req.tabId, type: "popup", width: 520, height: h, focused: true });
   const cur = await getReq(req.tabId);
   if (cur) { cur.windowId = w.id; await chrome.storage.session.set({ [reqKey(req.tabId)]: cur }); }
 }
@@ -234,7 +165,7 @@ async function dropReq(tabId, closeWindow) {
   return req;
 }
 
-// One decision from the request window.
+// One decision from the request window. msg.scope: "site" (this website) or "all" (every website).
 async function decide(msg) {
   const req = await getReq(msg.tabId);
   if (!req || req.docId !== msg.docId) return;
@@ -244,8 +175,9 @@ async function decide(msg) {
   else await dropReq(msg.tabId, true);
   const ctx = { tabId: req.tabId, docId: req.docId, url: req.url, host: req.host };
   if (msg.remember) {
-    await updatePerms((p) => { p[permKey(req.host, it.file)] = msg.allow ? { d: "allow", hash: it.hash, at: Date.now() } : { d: "block", at: Date.now() }; });
-    log({ host: req.host, url: req.url, file: it.file, ev: msg.allow ? "always allowed" : "always blocked", note: "chosen in the request window" });
+    const where = msg.scope === "all" ? SW.ALL : req.host;
+    await updatePerms((p) => { p[SW.permKey(where, it.file)] = msg.allow ? { d: "allow", hash: it.hash, at: Date.now() } : { d: "block", at: Date.now() }; });
+    log({ host: where === SW.ALL ? "every website" : req.host, url: req.url, file: it.file, ev: msg.allow ? "always allowed" : "always blocked", note: "chosen in the request window" });
   }
   if (msg.allow) await run(ctx, it.file, it.hash, !msg.remember);
   else { await mark(ctx, [it.file], msg.remember ? "blocked" : "rejected"); if (!msg.remember) log({ host: req.host, url: req.url, file: it.file, ev: "rejected", note: "this time" }); }
@@ -254,16 +186,19 @@ async function decide(msg) {
 
 // ---------------------------------------------------------------- badge = the running indicator
 
-async function refreshBadge(ctx) {
+async function refreshBadge(ctx, set) {
+  set = set || await getSettings();
+  let text = "", colour = "#4c6b22", title = "Site Works: no scripts for this page";
   const L = await pageStateOf(ctx), v = Object.keys(L).map((f) => ({ f, s: L[f].s }));
   const by = (s) => v.filter((x) => (Array.isArray(s) ? s.includes(x.s) : x.s === s)).map((x) => x.f);
   const ran = by("ran"), wait = by(["waiting", "pending"]), failed = by("failed"), off = by(["rejected", "blocked"]);
-  let text = "", colour = "#4c6b22", title = "Site Works: no scripts for this page";
-  if (failed.length) { text = "ERR"; colour = "#c0392b"; title = "Site Works: " + failed.length + " script(s) failed - see the log or the page's Console"; }
+  if (!set.enabled) { text = "OFF"; colour = "#56636f"; title = "Site Works is turned OFF everywhere" + (ran.length ? " (" + ran.length + " script(s) still running here until reload)" : ""); }
+  else if (SW.isPaused(set.paused, ctx.host)) { text = "II"; colour = "#56636f"; title = "Site Works is paused on " + ctx.host + (ran.length ? " (" + ran.length + " script(s) still running here until reload)" : ""); }
+  else if (failed.length) { text = "ERR"; colour = "#c0392b"; title = "Site Works: " + failed.length + " script(s) failed - see the log or the page's Console"; }
   else if (wait.length) { text = "?"; colour = "#d18b00"; title = "Site Works: " + wait.length + " script(s) waiting for your permission - click to review"; }
   else if (ran.length) { text = String(ran.length); title = "Site Works: RUNNING on this page:\n" + ran.join("\n"); }
   else if (off.length) { text = "off"; colour = "#56636f"; title = "Site Works: " + off.length + " script(s) not run on this page (rejected or blocked)"; }
-  if (ran.length && !failed.length && !wait.length && off.length) title += "\nNot run: " + off.join(", ");
+  if (set.enabled && ran.length && !failed.length && !wait.length && off.length) title += "\nNot run: " + off.join(", ");
   try {
     await chrome.action.setBadgeText({ tabId: ctx.tabId, text });
     await chrome.action.setBadgeBackgroundColor({ tabId: ctx.tabId, color: colour });
@@ -271,11 +206,141 @@ async function refreshBadge(ctx) {
   } catch (e) {}
 }
 
+async function forEachWebTab(fn) {
+  try { (await chrome.tabs.query({ url: ["http://*/*", "https://*/*"] })).forEach((t) => queue(t.id, () => fn(t))); } catch (e) {}
+}
+const sweepOpenTabs = () => forEachWebTab((t) => apply(t.id, t.url));
+const refreshAllBadges = () => forEachWebTab(async (t) => { const c = await ctxOf(t); if (c) await refreshBadge(c); });
+
+// ---------------------------------------------------------------- controls (own pages, menus, shortcuts only)
+
+async function setEnabled(on) {
+  await chrome.storage.local.set({ enabled: !!on });
+  log({ host: "", url: "", file: "", ev: on ? "turned on" : "turned off", note: "everywhere" });
+  if (on) { for (const r of await allReqs()) await dropReq(r.tabId, true); sweepOpenTabs(); }
+  else { for (const r of await allReqs()) await dropReq(r.tabId, true); }
+  refreshAllBadges(); updateMenus();
+}
+async function setPaused(host, pause) {
+  const set = await getSettings();
+  let paused = set.paused.filter((h) => h !== host);
+  if (pause) paused.push(host);
+  await chrome.storage.local.set({ paused });
+  log({ host, url: "", file: "", ev: pause ? "paused" : "resumed", note: "on this website" });
+  if (!pause) forEachWebTab((t) => { try { if (SW.urlParts(t.url).host === host) return apply(t.id, t.url); } catch (e) {} });
+  refreshAllBadges(); updateMenus();
+}
+// Forget saved decisions. Any of host / file may be omitted (= all).
+async function forget(host, file) {
+  let n = 0;
+  await updatePerms((p) => Object.keys(p).forEach((k) => {
+    const i = k.indexOf("|"), h = k.slice(0, i), f = k.slice(i + 1);
+    if ((host == null || h === host) && (file == null || f === file)) { delete p[k]; n++; }
+  }));
+  log({ host: host === SW.ALL ? "every website" : host || "", url: "", file: file || "", ev: "decision revoked", note: n + " decision(s) forgotten" });
+  return n;
+}
+// Your own edit, saved from the Site Works editor: carry existing "always allow" over to the new contents.
+async function rehash(file, hash) {
+  let n = 0;
+  await updatePerms((p) => Object.keys(p).forEach((k) => { if (k.endsWith("|" + file) && p[k].d === "allow") { p[k].hash = hash; n++; } }));
+  if (n) log({ host: "", url: "", file, ev: "always allowed", note: "kept after your edit in the Site Works editor (" + n + " website(s))" });
+  return n;
+}
+
+// The toolbox (sites\00-toolbox.js) on demand: you asked for it from Site Works' own
+// menu or shortcut, which counts as "allow this time" unless you have blocked it here.
+async function openToolbox(tab) {
+  const c = await ctxOf(tab); if (!c) return;
+  const idx = await SW.loadIndex();
+  if (!idx.files.includes(TOOLBOX)) { await notifyPage(c, "Site Works: no sites\\" + TOOLBOX + " in your index."); return; }
+  const call = () => inPageMain(c, () => { if (window.__swToolbox) { window.__swToolbox.open(); return true; } return false; });
+  if (await call().catch(() => false)) return;
+  let hash; try { hash = await SW.scriptHash(TOOLBOX); } catch (e) { return; }
+  if (SW.verdict(await getPerms(), c.host, TOOLBOX, hash) === "block") { await notifyPage(c, "Site Works: the toolbox is blocked on " + c.host + " (Manage to change)."); return; }
+  const L = await pageStateOf(c);
+  if (!(L[TOOLBOX] && L[TOOLBOX].s === "ran")) await run(c, TOOLBOX, hash, true, "opened from the Site Works menu or shortcut");
+  await call().catch(() => {});
+  await refreshBadge(c);
+}
+async function inPageMain(ctx, func, args) {
+  const [res] = await chrome.scripting.executeScript({ target: { tabId: ctx.tabId, documentIds: [ctx.docId] }, world: "MAIN", func, args: args || [] });
+  return res && res.result;
+}
+// A small message drawn by the extension's isolated world (the page can't trigger it).
+function notifyPage(ctx, text) {
+  return inPage(ctx, (t) => {
+    const d = document.createElement("div");
+    d.textContent = t;
+    d.style.cssText = "position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:2147483647;background:#1b2838;color:#fff;border:1px solid #66c0f4;padding:10px 16px;border-radius:8px;font:13px 'Segoe UI',Arial,sans-serif;box-shadow:0 4px 18px rgba(0,0,0,.5)";
+    document.documentElement.appendChild(d); setTimeout(() => d.remove(), 3500);
+  }, [text]).catch(() => {});
+}
+function copyInPage(ctx, text) {
+  return inPage(ctx, (t) => {
+    const ta = document.createElement("textarea"); ta.value = t; ta.style.cssText = "position:fixed;top:-1000px;opacity:0";
+    document.documentElement.appendChild(ta); ta.select(); const ok = document.execCommand("copy"); ta.remove(); return ok;
+  }, [text]).catch(() => false);
+}
+
+// ---------------------------------------------------------------- right-click menu
+
+function buildMenus() {
+  chrome.contextMenus.removeAll(() => {
+    const all = ["page", "selection", "link", "image", "video", "audio", "frame", "editable"];
+    const add = (o) => chrome.contextMenus.create(Object.assign({ contexts: all, documentUrlPatterns: ["http://*/*", "https://*/*"] }, o), () => void chrome.runtime.lastError);
+    add({ id: "sw-toolbox", title: "Open toolbox on this page   (Alt+Shift+K)" });
+    add({ id: "sw-copy-link", title: "Copy link as Markdown", contexts: ["link"] });
+    add({ id: "sw-copy-page", title: "Copy page as Markdown link" });
+    add({ id: "sw-new", title: "New script for this page…" });
+    add({ id: "sw-sep", type: "separator" });
+    add({ id: "sw-pause", title: "Pause Site Works on this website" });
+    add({ id: "sw-enabled", title: "Site Works on", type: "checkbox", checked: true });
+    add({ id: "sw-manage", title: "Manage permissions, scripts & log" });
+    updateMenus();
+  });
+}
+async function updateMenus() {
+  const set = await getSettings();
+  let host = "";
+  try { const [t] = await chrome.tabs.query({ active: true, lastFocusedWindow: true }); if (t && /^https?:/.test(t.url || "")) host = SW.urlParts(t.url).host; } catch (e) {}
+  const paused = host && SW.isPaused(set.paused, host);
+  chrome.contextMenus.update("sw-enabled", { checked: set.enabled }, () => void chrome.runtime.lastError);
+  chrome.contextMenus.update("sw-pause", { title: paused ? "Resume Site Works on " + host : "Pause Site Works on " + (host || "this website"), enabled: set.enabled }, () => void chrome.runtime.lastError);
+}
+function openPage(path) { return chrome.tabs.create({ url: chrome.runtime.getURL(path) }); }
+const editorFor = (tab) => openPage("editor.html?tab=" + tab.id + "&url=" + encodeURIComponent(tab.url));
+
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  const id = info.menuItemId;
+  if (id === "sw-manage") return openPage("manage.html");
+  if (id === "sw-enabled") return setEnabled(info.checked);
+  if (!tab || !/^https?:/.test(tab.url || "")) return;
+  if (id === "sw-toolbox") return queue(tab.id, () => openToolbox(tab));
+  if (id === "sw-new") return editorFor(tab);
+  if (id === "sw-pause") { const set = await getSettings(), h = SW.urlParts(tab.url).host; return setPaused(h, !SW.isPaused(set.paused, h)); }
+  if (id === "sw-copy-link" || id === "sw-copy-page") {
+    const c = await ctxOf(tab); if (!c) return;
+    const label = id === "sw-copy-link" ? (info.selectionText || info.linkText || info.linkUrl) : (tab.title || tab.url);
+    const url = id === "sw-copy-link" ? info.linkUrl : tab.url;
+    const md = "[" + String(label).replace(/\s+/g, " ").trim().replace(/([\[\]])/g, "\\$1") + "](" + url.replace(/\)/g, "%29") + ")";
+    if (await copyInPage(c, md)) notifyPage(c, "Copied: " + md.slice(0, 120));
+  }
+});
+
+chrome.commands.onCommand.addListener(async (command, tab) => {
+  if (!tab) { try { [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true }); } catch (e) {} }
+  if (command === "toggle-enabled") { const set = await getSettings(); return setEnabled(!set.enabled); }
+  if (!tab || !/^https?:/.test(tab.url || "")) return;
+  if (command === "open-toolbox") return queue(tab.id, () => openToolbox(tab));
+  if (command === "toggle-pause") { const set = await getSettings(), h = SW.urlParts(tab.url).host; await setPaused(h, !SW.isPaused(set.paused, h)); const c = await ctxOf(tab); if (c) notifyPage(c, "Site Works " + (SW.isPaused((await getSettings()).paused, h) ? "paused" : "resumed") + " on " + h); }
+  if (command === "new-script") return editorFor(tab);
+});
+
 // ---------------------------------------------------------------- events
 
 chrome.webNavigation.onCommitted.addListener((d) => {
   if (d.frameId !== 0) return;
-  // A new page: the old page's request is void. Reset the badge until the gate runs.
   queue(d.tabId, async () => {
     const req = await getReq(d.tabId);
     if (req && req.docId !== d.documentId) await dropReq(d.tabId, true);
@@ -287,10 +352,11 @@ chrome.webNavigation.onCompleted.addListener(onNav);
 chrome.webNavigation.onHistoryStateUpdated.addListener(onNav);
 chrome.webNavigation.onReferenceFragmentUpdated.addListener(onNav);
 
-chrome.tabs.onActivated.addListener(({ tabId }) => queue(tabId, async () => { const req = await getReq(tabId); if (req) await showPrompt(req, false); }));
+chrome.tabs.onActivated.addListener(({ tabId }) => { updateMenus(); queue(tabId, async () => { const req = await getReq(tabId); if (req) await showPrompt(req, false); }); });
+chrome.tabs.onUpdated.addListener((tabId, ch) => { if (ch.url) updateMenus(); });
+chrome.windows.onFocusChanged.addListener(() => updateMenus());
 chrome.tabs.onRemoved.addListener((tabId) => { queue(tabId, () => dropReq(tabId, true)).then(() => { delete busy[tabId]; }); });
 
-// Closing the request window = reject everything still in it, for this page only.
 chrome.windows.onRemoved.addListener(async (windowId) => {
   for (const req of await allReqs()) {
     if (req.windowId !== windowId) continue;
@@ -305,39 +371,36 @@ chrome.windows.onRemoved.addListener(async (windowId) => {
   }
 });
 
-// Tabs already open when the extension starts or is reloaded.
-async function sweepOpenTabs() {
-  try { (await chrome.tabs.query({ url: ["http://*/*", "https://*/*"] })).forEach((t) => queue(t.id, () => apply(t.id, t.url))); } catch (e) {}
-}
-chrome.runtime.onInstalled.addListener(sweepOpenTabs);
-chrome.runtime.onStartup.addListener(sweepOpenTabs);
+chrome.runtime.onInstalled.addListener(() => { buildMenus(); sweepOpenTabs(); });
+chrome.runtime.onStartup.addListener(() => { buildMenus(); sweepOpenTabs(); });
 
-// Only Site Works' own pages (popup, request window, Manage) may talk to the gate.
+// Only Site Works' own pages (popup, request window, Manage, editor, clipboard) may talk to the gate.
 const fromOwnPage = (sender) => sender && sender.id === chrome.runtime.id && typeof sender.url === "string" && sender.url.startsWith(chrome.runtime.getURL(""));
+const fromPage = (sender, page) => sender.url.startsWith(chrome.runtime.getURL(page));
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   if (!msg || !msg.siteWorks || !fromOwnPage(sender)) return;
-  if (msg.siteWorks === "decide") {
-    if (!sender.url.startsWith(chrome.runtime.getURL(PROMPT))) return;
-    queue(msg.tabId, () => decide(msg)).then(() => reply({ ok: true }));
-    return true;
-  }
-  if (msg.siteWorks === "review") {
-    queue(msg.tabId, async () => { const req = await getReq(msg.tabId); if (req) await showPrompt(req, true); }).then(() => reply({ ok: true }));
-    return true;
-  }
-  if (msg.siteWorks === "status") {
-    (async () => {
-      const idx = await loadIndex(), tab = msg.tab;
-      let parts = null, state = {}; try { parts = urlParts(tab.url); } catch (e) {}
+  const done = (p) => { Promise.resolve(p).then((r) => reply(r === undefined ? { ok: true } : r), (e) => reply({ error: String(e && e.message || e) })); return true; };
+  switch (msg.siteWorks) {
+    case "decide": if (!fromPage(sender, PROMPT)) return; return done(queue(msg.tabId, () => decide(msg)));
+    case "review": return done(queue(msg.tabId, async () => { const req = await getReq(msg.tabId); if (req) await showPrompt(req, true); }));
+    case "setEnabled": return done(setEnabled(msg.on));
+    case "setPaused": return done(setPaused(msg.host, msg.pause));
+    case "forget": return done(forget(msg.host == null ? null : msg.host, msg.file == null ? null : msg.file).then((n) => ({ n })));
+    case "rehash": if (!fromPage(sender, "editor.html")) return; return done(rehash(msg.file, msg.hash).then((n) => ({ n })));
+    case "toolbox": return done(chrome.tabs.get(msg.tabId).then((t) => queue(t.id, () => openToolbox(t))));
+    case "newScript": return done(chrome.tabs.get(msg.tabId).then(editorFor));
+    case "status": return done((async () => {
+      const idx = await SW.loadIndex(), tab = msg.tab, set = await getSettings();
+      let parts = null, state = {}; try { parts = SW.urlParts(tab.url); } catch (e) {}
       const docId = await docOf(tab.id);
       if (docId) state = await pageStateOf({ tabId: tab.id, docId });
-      const sites = Object.keys(idx.sites).concat(idx.files.filter((f) => f.includes("/")).map((f) => f.split("/")[0]))
-        .filter((s, i, a) => a.indexOf(s) === i).filter((s) => parts && siteMatches(s, idx, parts.host));
-      const perms = await getPerms(), match = tab.url ? matchingScripts(idx, tab.url) : [];
-      const saved = {}; if (parts) match.forEach((f) => { const p = perms[permKey(parts.host, f)]; if (p) saved[f] = p.d; });
-      reply({ idx, match, state, parts, sites, saved, pending: !!(await getReq(tab.id)) });
-    })();
-    return true;
+      const sites = parts ? SW.sitesFor(idx, parts.host) : [];
+      const perms = await getPerms(), match = tab.url ? SW.matchingScripts(idx, tab.url) : [];
+      const saved = {};
+      if (parts) match.forEach((f) => { const own = perms[SW.permKey(parts.host, f)], all = perms[SW.permKey(SW.ALL, f)]; if (own || all) saved[f] = { d: (own || all).d, all: !own }; });
+      const siteDecisions = parts ? Object.keys(perms).filter((k) => k.startsWith(parts.host + "|")).length : 0;
+      return { idx, match, state, parts, sites, saved, siteDecisions, enabled: set.enabled, paused: !!(parts && SW.isPaused(set.paused, parts.host)), pending: !!(await getReq(tab.id)), toolbox: idx.files.includes(TOOLBOX) };
+    })());
   }
 });

@@ -1,0 +1,64 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Site Works — script editor</title>
+<link rel="stylesheet" href="ui.css">
+<style>
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0}
+  .row > label{min-width:110px;color:var(--dim)}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{background:var(--field);border:1px solid var(--line);color:var(--dim);border-radius:14px;padding:2px 10px;cursor:pointer;user-select:none;font-size:12px}
+  .chip.on{background:#2a475e;border-color:var(--blue);color:#fff}
+  .chip .x{margin-left:4px;opacity:.6}
+  #path{font-size:14px;color:#fff;word-break:break-all}
+  #verdict{font-weight:600}
+  #code{width:100%;min-height:420px;resize:vertical;line-height:1.45;tab-size:2;white-space:pre;overflow:auto;font-family:Consolas,"Cascadia Mono",Menlo,monospace;font-size:13px}
+  #hostsBox{width:100%;min-height:70px;font-family:Consolas,Menlo,monospace;font-size:12px}
+  .hide{display:none!important}
+  #also li{word-break:break-all}
+</style></head>
+<body><main>
+  <nav class="top"><h1>Script editor</h1><a href="manage.html">Manage</a><a href="clip.html">Copy files</a></nav>
+  <p class="dim" id="intro"></p>
+
+  <div class="card" id="whereCard">
+    <h2 style="margin-top:0">Where it runs</h2>
+    <div class="row" id="urlRow"><label>This page</label><code id="pageUrl"></code></div>
+    <div class="row"><label>Site folder</label>
+      <select id="site"></select>
+      <input type="text" id="newSite" class="hide" placeholder="folder name, e.g. example.com or Google" size="28">
+      <span class="dim" id="siteNote"></span>
+    </div>
+    <div class="row hide" id="hostRow"><label>Only on</label><span class="chips" id="hostChip"></span><span class="dim">this site folder covers several hosts — tick to limit the script to this one</span></div>
+    <div class="row" id="partsRow"><label>Path parts</label><span class="chips" id="parts"></span>
+      <input type="text" id="extra" placeholder="add a part…" size="14" title="Type a folder name and press Enter">
+      <span class="dim">the URL path must contain the lit parts, in this order</span></div>
+    <div class="row"><label>File name</label><input type="text" id="name" size="32"></div>
+    <div class="row"><label>Saved as</label><span id="path" class="mono"></span></div>
+    <div class="row"><label>This page</label><span id="verdict"></span></div>
+    <div class="row hide" id="hostsRow" style="align-items:flex-start"><label>hosts.txt</label>
+      <div style="flex:1;min-width:260px"><textarea id="hostsBox" placeholder="one host per line, e.g.&#10;steamcommunity.com&#10;steampowered.com"></textarea>
+      <div class="dim">Hosts this site folder covers (subdomains included). Leave empty to match by folder name.</div></div></div>
+    <div id="alsoWrap" class="hide"><div class="dim" style="margin-top:6px">Other scripts that already run on this page:</div><ul id="also" class="mono"></ul></div>
+  </div>
+
+  <h2>Code</h2>
+  <textarea id="code" spellcheck="false"></textarea>
+  <div class="row">
+    <label class="switch hide" id="keepWrap" title="This is your own edit, so keep its &quot;always allow&quot; decisions instead of being asked again"><input type="checkbox" id="keep" checked> Keep my “always allow” decisions after saving</label>
+  </div>
+  <div class="bar" style="margin-top:6px">
+    <button class="go big" id="save">Save</button>
+    <button class="go big" id="saveReload">Save &amp; reload page</button>
+    <button id="openEd" class="hide">Open in text editor</button>
+    <button id="reveal">Show in folder</button>
+    <button id="copy">Copy code</button>
+    <button id="dl">Download .js</button>
+    <button id="trash" class="danger hide">Move to trash</button>
+    <span class="dim" id="status"></span>
+  </div>
+  <div class="help hide" id="noHelper"></div>
+  <p class="dim">Ctrl+S saves. Scripts run inside the page after it loads, once per page load, and ask for your permission first. Saving writes the file into your sites folder and rebuilds the index — no need to run Rebuild index.cmd.</p>
+</main>
+<script src="match.js"></script>
+<script src="ui.js"></script>
+<script src="editor.js"></script>
+</body></html>

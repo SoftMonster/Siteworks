@@ -1,0 +1,9 @@
+{
+    "name":  "com.siteworks.helper",
+    "description":  "Site Works file helper: writes scripts into the SiteWorks sites folder and rebuilds its index.",
+    "path":  "C:\\Users\\Mr Super Google\\OneDrive\\文档\\GitHub\\Siteworks\\helper\\siteworks-host.cmd",
+    "type":  "stdio",
+    "allowed_origins":  [
+                            "chrome-extension://falhkcegdkgfjmgnebblkjdhikgefoaf/"
+                        ]
+}
