@@ -12,7 +12,8 @@
 //     (min 2000 ms), stops at the first "slow down" (429) and pauses 1 h (doubling, max 24 h).
 //     New prices are kept in this browser and saved to Downloads as a
 //     steam_market_prices_*.json capture that Card Shelf imports.
-// The green "Quick sell over 14p" button (Augmented Steam needed) quick-sells one copy of
+// The green "Quick sell over 14p" button (uses the Steam Quick Sell script if it is running,
+// otherwise Augmented Steam) quick-sells one copy of
 // each card design whose Quick sell price is over 14p, page by page. Click it again to stop.
 // The cache lives in this browser (localStorage for steamcommunity.com), so it is still
 // there next time you paste the script.
@@ -349,6 +350,12 @@
   const panelName = () => { const p = panel(), n = p && p.querySelector(".hover_item_name, [id$='_item_name']"); return n ? n.textContent.trim() : ""; };
   const findQuickSell = () => {
     const p = panel(); if (!p) return null;
+    // Prefer the Steam Quick Sell userscript's button (.qs-btn). It is disabled while it works out
+    // its price, so wait for it. When that script is running, never fall back to Augmented Steam.
+    const ours = p.querySelector(".qs-btn");
+    if (ours || window.__quickSell2) {
+      return ours && !ours.disabled && /quick sell this for/i.test(ours.textContent) && visible(ours) ? ours : null;
+    }
     return [...p.querySelectorAll("a, button, span")].find((b) => /quick sell this for/i.test(b.textContent) && visible(b) && !b.querySelector("a, button")) || null;
   };
   const parsePrice = (text) => { const nums = text.replace(/\s/g, "").match(/\d+(?:[.,]\d+)?/g); return nums ? parseFloat(nums[nums.length - 1].replace(",", ".")) : NaN; };
