@@ -124,10 +124,48 @@
         return cache.get(appid);
     }
 
-    // ---- URL builders (same format as the gamecards-page buttons) ----
-    function marketUrl(kind, appid, names, suffix) {
+    // ---- market URL builder + market existence check ----
+    // multibuy/multisell abort with 'The item "..." does not exist on the market' if ANY item in the
+    // list has no market entry, so every list is checked against the market first.
+    function marketUrl(kind, hashNames) {
         return `https://steamcommunity.com/market/${kind}?appid=753&contextid=6` +
-            names.map(n => `&items[]=${appid}-${encodeURIComponent(n + (suffix || ''))}&qty[]=1`).join('');
+            hashNames.map(h => `&items[]=${encodeURIComponent(h)}&qty[]=1`).join('');
+    }
+
+    const norm = s => s.toLowerCase().replace(/\s+/g, ' ').trim();
+    const marketCache = new Map(); // appid -> { time, promise }
+
+    // Returns Map(normalised hash_name -> real hash_name) of all trading cards (normal + foil) for the game
+    // that exist on the market, or null if the result can't be trusted to be complete.
+    function getMarketNames(appid) {
+        const hit = marketCache.get(appid);
+        if (hit && Date.now() - hit.time < 5 * 60 * 1000) return hit.promise;
+        const url = 'https://steamcommunity.com/market/search/render/?query=&start=0&count=100&appid=753&norender=1' +
+            `&category_753_Game%5B%5D=tag_app_${appid}&category_753_item_class%5B%5D=tag_item_class_2`;
+        const promise = fetch(url, { credentials: 'same-origin' })
+            .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+            .then(j => {
+                if (!j || j.success === false || !Array.isArray(j.results)) throw new Error('bad market response');
+                if (j.total_count > j.results.length) return null; // incomplete page, don't filter
+                return new Map(j.results.map(x => [norm(x.hash_name), x.hash_name]));
+            });
+        promise.catch(() => marketCache.delete(appid));
+        marketCache.set(appid, { time: Date.now(), promise });
+        return promise;
+    }
+
+    async function resolveHashNames(appid, names, suffix) {
+        const wanted = names.map(n => `${appid}-${n}${suffix || ''}`);
+        let existing = null;
+        try { existing = await getMarketNames(appid); }
+        catch (e) { console.warn('[SBB] market lookup failed, using unverified names', e); }
+        if (!existing) return { hashNames: wanted, skipped: [] };
+        const hashNames = [], skipped = [];
+        wanted.forEach(w => {
+            const real = existing.get(norm(w));
+            real ? hashNames.push(real) : skipped.push(w);
+        });
+        return { hashNames, skipped };
     }
 
     // ---- button helpers ----
@@ -149,20 +187,31 @@
     }
     const listTitle = (head, names) => names.length ? head + ':\n' + names.map(n => '• ' + n).join('\n') : '';
 
-    // Dynamic buttons: until card data has loaded their href is "#", so we fetch first, then open.
-    function wireDynamic(a, urlFn) {
+    // Market buttons: load card data if needed, drop cards that have no market entry, then open the page.
+    function wireMarket(ctx, a, key) {
         a.addEventListener('click', async (e) => {
             e.stopPropagation();
-            const href = a.getAttribute('href');
-            if (href && href !== '#') return; // real link already set, let the browser handle it
             e.preventDefault();
             const w = window.open('about:blank', '_blank'); // opened synchronously to avoid popup blocking
             try {
-                const url = await urlFn();
-                if (w) w.location.href = url;
+                if (!ctx.targets) render(ctx, await getData(ctx.appid, true));
+                const t = ctx.targets[key];
+                const { hashNames, skipped } = await resolveHashNames(ctx.appid, t.names, t.suffix);
+                if (skipped.length) {
+                    console.info('[SBB] left out (no market entry):', skipped);
+                    a.title = a.title.split('\n\nLeft out')[0] +
+                        '\n\nLeft out (no market entry):\n' + skipped.map(x => '• ' + x).join('\n');
+                }
+                if (!hashNames.length) {
+                    if (w) w.close();
+                    alert('None of these cards exist on the Steam Market right now:\n' + skipped.join('\n'));
+                    return;
+                }
+                const url = marketUrl(t.kind, hashNames);
+                if (w) w.location.href = url; else window.open(url, '_blank');
             } catch (err) {
                 if (w) w.close();
-                alert('Could not load the card list for this game: ' + err.message);
+                alert('Could not prepare this link: ' + err.message);
             }
         });
     }
@@ -173,8 +222,6 @@
         const size = all.length;
         const missingNormal = d.cards.filter(c => !c.owned).map(c => c.name);
         const missingFoil = all.filter(n => !d.foilOwned.has(n));
-
-        setBtn(ctx.sell, { href: marketUrl('multisell', appid, all) });
 
         // Normal: complete only at level 5. The number in brackets is the number of cards the button opens
         // (missing cards, or the whole set when complete / nothing missing).
@@ -190,7 +237,7 @@
             nNames = all; nLabel = `Buy next set (${size})`;
             nTitle = `You own the full set, badge level ${d.normalLevel}/${NORMAL_MAX_LEVEL} – opens multibuy for all ${size} cards`;
         }
-        setBtn(ctx.normal, { href: marketUrl('multibuy', appid, nNames), label: nLabel, title: nTitle });
+        setBtn(ctx.normal, { label: nLabel, title: nTitle });
 
         // Foil: complete at level 1.
         const foilDone = d.foilLevel >= FOIL_MAX_LEVEL;
@@ -205,7 +252,14 @@
             fNames = all; fLabel = `Buy FOIL set (${size})`;
             fTitle = `You own the full foil set but have not crafted the badge – opens multibuy for all ${size} foil cards`;
         }
-        setBtn(ctx.foil, { href: marketUrl('multibuy', appid, fNames, ' (Foil)'), label: fLabel, title: fTitle });
+        setBtn(ctx.foil, { label: fLabel, title: fTitle });
+
+        // what each market button opens when clicked (verified against the market at click time)
+        ctx.targets = {
+            sell:   { kind: 'multisell', names: all,    suffix: '' },
+            normal: { kind: 'multibuy',  names: nNames, suffix: '' },
+            foil:   { kind: 'multibuy',  names: fNames, suffix: ' (Foil)' },
+        };
     }
 
     // ---- lazy prefetch when a row scrolls into view ----
@@ -253,10 +307,9 @@
             const foil   = makeBtn('Buy missing FOIL');
 
             const ctx = { appid, sell, normal, foil };
-            const urgentRender = async () => { const d = await getData(appid, true); render(ctx, d); return d; };
-            wireDynamic(sell,   async () => { await urgentRender(); return sell.href; });
-            wireDynamic(normal, async () => { await urgentRender(); return normal.href; });
-            wireDynamic(foil,   async () => { await urgentRender(); return foil.href; });
+            wireMarket(ctx, sell, 'sell');
+            wireMarket(ctx, normal, 'normal');
+            wireMarket(ctx, foil, 'foil');
             [booster, store, inv, dialog].forEach(b => b && b.addEventListener('click', e => e.stopPropagation()));
 
             const wrap = document.createElement('div');
