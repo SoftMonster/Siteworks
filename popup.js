@@ -30,9 +30,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
       li.append(winPath(f) + " ", el("span", st[0], st[1]));
       const saved = r.saved[f];
       if (saved) {
-        li.append(el("span", "tag " + (saved.d === "allow" ? "ok" : "bad"), "always " + (saved.d === "allow" ? "allowed" : "blocked") + (saved.all ? " everywhere" : " here")));
+        li.append(el("span", "tag " + (saved.d === "allow" ? "ok" : "bad"), "always " + (saved.d === "allow" ? "allowed" : "blocked") + (saved.all ? " everywhere" : saved.where === r.parts.host ? " here" : " on " + saved.where)));
         const fg = el("a", "mini", "forget"); fg.title = "Ask again next time";
-        fg.onclick = () => UI.bg("forget", { host: saved.all ? "*" : r.parts.host, file: f }).then(() => { msg("Forgot that decision - it will ask next time."); render(); });
+        fg.onclick = () => UI.bg("forget", { host: saved.where, file: f }).then(() => { msg("Forgot that decision - it will ask next time."); render(); });
         li.append(fg);
       }
       const ed = el("a", "mini", "edit"); ed.onclick = () => openTab("editor.html?file=" + encodeURIComponent(f) + "&tab=" + tab.id + "&url=" + encodeURIComponent(tab.url));

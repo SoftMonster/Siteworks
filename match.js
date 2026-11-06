@@ -85,9 +85,19 @@ var SW = (() => {
   // A decision for this website wins over an every-website one.
   const permKey = (host, file) => host + "|" + file;
   const ALL = "*";
-  function decisionFor(perms, host, file) {
-    return perms[permKey(host, file)] || perms[permKey(ALL, file)] || null;
+  // A decision is remembered for the script's SITE FOLDER (sites\\Steamworks\\... -> "Steamworks"),
+  // so allowing it once covers every website that folder covers (steamcommunity.com,
+  // store.steampowered.com, ...). Scripts directly in sites\\ have no folder, so they
+  // stay per website. Old per-website decisions still work.
+  function groupOf(file, host) { const i = file.indexOf("/"); return i > 0 ? file.slice(0, i) : host; }
+  function decisionKeyFor(perms, host, file) {
+    const g = permKey(groupOf(file, host), file), h = permKey(host, file), a = permKey(ALL, file);
+    let k = null;
+    if (perms[g] && perms[h]) k = (perms[h].at || 0) > (perms[g].at || 0) ? h : g;   // newest of the two wins
+    else k = perms[g] ? g : perms[h] ? h : null;
+    return k || (perms[a] ? a : null);
   }
+  function decisionFor(perms, host, file) { const k = decisionKeyFor(perms, host, file); return k ? perms[k] : null; }
   // "block" | "allow" | "changed" (allowed, file changed since) | "new"
   function verdict(perms, host, file, hash) {
     const p = decisionFor(perms, host, file);
@@ -98,5 +108,5 @@ var SW = (() => {
   const isPaused = (paused, host) => (paused || []).some((h) => hostIs(host, h));
 
   return { loadIndex, urlParts, hostIs, siteHosts, siteMatches, pathMatches, fileMatches, matchingScripts, sitesFor,
-           sha256, scriptText, scriptHash, textHash, permKey, ALL, decisionFor, verdict, isPaused };
+           sha256, scriptText, scriptHash, textHash, permKey, ALL, groupOf, decisionKeyFor, decisionFor, verdict, isPaused };
 })();

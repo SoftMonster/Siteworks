@@ -5,6 +5,7 @@ const root = document.getElementById("root");
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 let busy = false, current = null;
 const ticked = {};   // keeps "Do not ask again" ticks when the list redraws
+const touched = {};  // the person changed the tick themselves (Reject only remembers then)
 
 const scopeOf = {};  // "site" | "all" per script
 function send(file, allow, remember, scope) {
@@ -40,10 +41,10 @@ function render() {
       const rem = el("label", "rem"), cb = el("input"); cb.type = "checkbox"; boxes[s.file] = cb;
       const txt = el("span"); txt.append(el("b", null, "Do not ask again"));
       const sc = el("select"); sc.className = "scope";
-      sc.append(new Option("on " + req.host + " only", "site"), new Option("on every website", "all"));
+      sc.append(new Option(s.group && s.group !== req.host ? "on all " + s.group + " websites" : "on " + req.host + " only", "site"), new Option("on every website", "all"));
       sc.value = scopeOf[s.file] || "site";
       sc.onclick = (e) => { e.preventDefault(); e.stopPropagation(); };
-      sc.onchange = () => { scopeOf[s.file] = sc.value; cb.checked = true; ticked[s.file] = true; label(); };
+      sc.onchange = () => { scopeOf[s.file] = sc.value; cb.checked = true; ticked[s.file] = true; touched[s.file] = true; label(); };
       const sm = el("small", null, "Remember the decision for this script "); sm.append(sc);
       txt.append(sm);
       rem.append(cb, txt);
@@ -52,19 +53,19 @@ function render() {
       const label = () => {
         const where = sc.value === "all" ? " everywhere" : " here";
         ok.innerHTML = "<b>ALLOW</b><span></span>"; ok.lastChild.textContent = cb.checked ? "Always run" + where : "Run this time";
-        no.innerHTML = "<b>REJECT</b><span></span>"; no.lastChild.textContent = cb.checked ? "Always block" + where : "Do not run this time";
+        no.innerHTML = "<b>REJECT</b><span></span>"; no.lastChild.textContent = cb.checked && touched[s.file] ? "Always block" + where : "Do not run this time";
       };
-      cb.checked = !!ticked[s.file];
-      cb.onchange = () => { ticked[s.file] = cb.checked; label(); }; label();
+      cb.checked = ticked[s.file] !== false;   // remembered by default: approve once, never asked again
+      cb.onchange = () => { ticked[s.file] = cb.checked; touched[s.file] = true; label(); }; label();
       ok.onclick = () => decide([s.file], true, () => cb.checked);
-      no.onclick = () => decide([s.file], false, () => cb.checked);
+      no.onclick = () => decide([s.file], false, () => cb.checked && !!touched[s.file]);
       btns.append(ok, no); c.append(btns, rem); root.append(c);
     });
     if (req.scripts.length > 1) {
       const all = el("div", "btns all"), ok = el("button", "allow"), no = el("button", "reject");
       ok.innerHTML = "<b>ALLOW ALL</b><span>each as ticked above</span>"; no.innerHTML = "<b>REJECT ALL</b><span>each as ticked above</span>";
       const files = req.scripts.map((s) => s.file), r = (f) => boxes[f].checked;
-      ok.onclick = () => decide(files, true, r); no.onclick = () => decide(files, false, r);
+      ok.onclick = () => decide(files, true, r); no.onclick = () => decide(files, false, (f) => r(f) && !!touched[f]);
       all.append(ok, no); root.append(all);
     }
   });

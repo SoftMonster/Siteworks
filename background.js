@@ -111,9 +111,9 @@ async function apply(tabId, url, docId) {
     try { hash = await SW.scriptHash(file); }
     catch (e) { await mark(ctx, [file], "failed"); log({ host, url, file, ev: "failed", note: "listed in index.json but the file is missing - rebuild the index" }); continue; }
     const v = SW.verdict(perms, host, file, hash);
-    if (v === "block") { await mark(ctx, [file], "blocked"); log({ host, url, file, ev: "blocked", note: perms[SW.permKey(host, file)] ? "always blocked on this website" : "always blocked on every website" }); }
+    if (v === "block") { await mark(ctx, [file], "blocked"); log({ host, url, file, ev: "blocked", note: SW.decisionKeyFor(perms, host, file).startsWith("*|") ? "always blocked on every website" : "always blocked on this site" }); }
     else if (v === "allow") await run(ctx, file, hash, false);
-    else ask.push({ file, hash, reason: v });
+    else ask.push({ file, hash, reason: v, group: SW.groupOf(file, host) });
   }
   if (ask.length) await request(ctx, ask);
   await refreshBadge(ctx);
@@ -175,9 +175,13 @@ async function decide(msg) {
   else await dropReq(msg.tabId, true);
   const ctx = { tabId: req.tabId, docId: req.docId, url: req.url, host: req.host };
   if (msg.remember) {
-    const where = msg.scope === "all" ? SW.ALL : req.host;
-    await updatePerms((p) => { p[SW.permKey(where, it.file)] = msg.allow ? { d: "allow", hash: it.hash, at: Date.now() } : { d: "block", at: Date.now() }; });
-    log({ host: where === SW.ALL ? "every website" : req.host, url: req.url, file: it.file, ev: msg.allow ? "always allowed" : "always blocked", note: "chosen in the request window" });
+    const where = msg.scope === "all" ? SW.ALL : (it.group || SW.groupOf(it.file, req.host));
+    await updatePerms((p) => {
+      // drop older per-website decisions for this script that the new one replaces
+      if (where !== SW.ALL) delete p[SW.permKey(req.host, it.file)];
+      p[SW.permKey(where, it.file)] = msg.allow ? { d: "allow", hash: it.hash, at: Date.now() } : { d: "block", at: Date.now() };
+    });
+    log({ host: where === SW.ALL ? "every website" : where === req.host ? req.host : req.host + " (site: " + where + ")", url: req.url, file: it.file, ev: msg.allow ? "always allowed" : "always blocked", note: "chosen in the request window" });
   }
   if (msg.allow) await run(ctx, it.file, it.hash, !msg.remember);
   else { await mark(ctx, [it.file], msg.remember ? "blocked" : "rejected"); if (!msg.remember) log({ host: req.host, url: req.url, file: it.file, ev: "rejected", note: "this time" }); }
@@ -233,9 +237,11 @@ async function setPaused(host, pause) {
 // Forget saved decisions. Any of host / file may be omitted (= all).
 async function forget(host, file) {
   let n = 0;
+  const idx = await SW.loadIndex();
+  const covers = (h) => host == null || h === host || (host !== SW.ALL && SW.sitesFor(idx, host).includes(h));   // host, or a site folder covering it
   await updatePerms((p) => Object.keys(p).forEach((k) => {
     const i = k.indexOf("|"), h = k.slice(0, i), f = k.slice(i + 1);
-    if ((host == null || h === host) && (file == null || f === file)) { delete p[k]; n++; }
+    if (covers(h) && (file == null || f === file)) { delete p[k]; n++; }
   }));
   log({ host: host === SW.ALL ? "every website" : host || "", url: "", file: file || "", ev: "decision revoked", note: n + " decision(s) forgotten" });
   return n;
@@ -398,8 +404,8 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
       const sites = parts ? SW.sitesFor(idx, parts.host) : [];
       const perms = await getPerms(), match = tab.url ? SW.matchingScripts(idx, tab.url) : [];
       const saved = {};
-      if (parts) match.forEach((f) => { const own = perms[SW.permKey(parts.host, f)], all = perms[SW.permKey(SW.ALL, f)]; if (own || all) saved[f] = { d: (own || all).d, all: !own }; });
-      const siteDecisions = parts ? Object.keys(perms).filter((k) => k.startsWith(parts.host + "|")).length : 0;
+      if (parts) match.forEach((f) => { const k = SW.decisionKeyFor(perms, parts.host, f); if (k) saved[f] = { d: perms[k].d, all: k.startsWith("*|"), where: k.slice(0, k.indexOf("|")) }; });
+      const siteDecisions = parts ? Object.keys(perms).filter((k) => { const w = k.slice(0, k.indexOf("|")); return w === parts.host || sites.includes(w); }).length : 0;
       return { idx, match, state, parts, sites, saved, siteDecisions, enabled: set.enabled, paused: !!(parts && SW.isPaused(set.paused, parts.host)), pending: !!(await getReq(tab.id)), toolbox: idx.files.includes(TOOLBOX) };
     })());
   }

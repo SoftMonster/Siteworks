@@ -57,10 +57,13 @@ PERMISSION GATE - NOTHING RUNS UNTIL YOU ALLOW IT
   A request for a tab in the background waits (badge "?") until you switch to it,
   or click the toolbar button and "Review waiting request".
 
-  Decisions are stored against the script AND the website - or every website,
-  which suits scripts directly in sites\ such as the toolbox. A decision for one
-  website beats an every-website one, so you can allow everywhere and still
-  block one site. "Always allow" is also tied to the script's contents
+  Decisions are stored against the script AND its site folder (sites\Steamworks\...
+  covers every website that folder covers, so you approve a script once, not once
+  per hostname) - or every website, which suits scripts directly in sites\ such as
+  the toolbox (those are otherwise remembered per website). "Do not ask again" is
+  ticked by default for Allow; Reject only remembers if you tick it yourself.
+  A decision for one website beats an every-website one, so you can allow
+  everywhere and still block one site. "Always allow" is also tied to the script's contents
   (SHA-256): if the file changes, Site Works asks again - unless you saved the
   change in the Site Works editor with "Keep my always-allow decisions" ticked.
 

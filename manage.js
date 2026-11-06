@@ -1,7 +1,7 @@
 // Site Works: switch, file helper, remembered decisions, scripts and the log.
 const { $, el, nicePath, winPath } = UI;
 const when = (t) => new Date(t).toLocaleString();
-const where = (h) => h === "*" ? "every website" : h;
+const where = (h) => h === "*" ? "every website" : h.includes(".") ? h : h + " (whole site)";
 const hashes = {};
 const hashOf = async (file) => (file in hashes) ? hashes[file] : (hashes[file] = await SW.scriptHash(file).catch(() => null));
 const getPerms = async () => (await chrome.storage.local.get("perms")).perms || {};
