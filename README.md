@@ -22,3 +22,7 @@ See **README.txt** for install steps, folder rules and details.
 | `helper\` | The PowerShell file helper (native messaging host) and its installer |
 | `build-index.ps1`, `Rebuild index.cmd` | Rebuild `sites\index.json` by hand |
 | `sites\` | Your scripts |
+
+## Development checks
+
+Requires Node.js 18 or later. Run `npm test` for folder-matching tests and `npm run check` to syntax-check the active JavaScript files. These checks do not replace a Brave/Chromium smoke test or a Windows PowerShell/native-messaging test.

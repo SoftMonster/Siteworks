@@ -19,7 +19,10 @@ var SW = (() => {
         const o = await r.json();
         let files = o && o.files; if (typeof files === "string") files = [files];
         const sites = (o && o.sites && typeof o.sites === "object") ? o.sites : {};
-        return { built: (o && o.built) || "", sites, files: Array.isArray(files) ? files.filter((f) => typeof f === "string" && /\.js$/i.test(f) && !f.split("/").includes("..")) : [] };
+        return { built: (o && o.built) || "", sites, files: Array.isArray(files) ? files.filter((f) =>
+          typeof f === "string" && f.length <= 1024 && /\.js$/i.test(f) &&
+          !f.includes("\\") && !f.startsWith("/") && !/[\x00-\x1f]/.test(f) &&
+          f.split("/").every((part) => part && part !== "." && part !== "..")) : [] };
       }
     } catch (e) {}
     return { built: "", sites: {}, files: [], missing: true };

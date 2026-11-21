@@ -36,8 +36,15 @@ async function getSettings() {
 
 let permChain = Promise.resolve();
 function updatePerms(fn) {
-  permChain = permChain.then(async () => { const perms = await getPerms(); fn(perms); await chrome.storage.local.set({ perms }); }).catch((e) => console.warn("Site Works:", e));
-  return permChain;
+  const next = permChain.then(async () => {
+    const perms = await getPerms();
+    fn(perms);
+    await chrome.storage.local.set({ perms });
+  });
+  // Keep the queue usable after a failed write, but propagate the failure to
+  // the caller so the UI cannot report a decision change that was not saved.
+  permChain = next.catch((e) => console.warn("Site Works:", e));
+  return next;
 }
 
 let logChain = Promise.resolve();
@@ -49,6 +56,48 @@ function log(entry) {
     await chrome.storage.local.set({ log: list });
   }).catch(() => {});
   return logChain;
+}
+// All mutations of shared decision/log data go through these queues. This prevents
+// extension pages from racing the service worker's permission and audit updates.
+function validDecisionKey(key) {
+  if (typeof key !== "string" || key.length > 2048 || /[\x00-\x1f]/.test(key)) return false;
+  const split = key.indexOf("|");
+  if (split <= 0 || split !== key.lastIndexOf("|")) return false;
+  const scope = key.slice(0, split), file = key.slice(split + 1);
+  if (!scope || !file || file.length > 1024 || !/\.js$/i.test(file) || file.includes("\\") || file.startsWith("/")) return false;
+  return file.split("/").every((part) => part && part !== "." && part !== "..");
+}
+function setDecision(key, value) {
+  if (!validDecisionKey(key)) throw new Error("Invalid decision key.");
+  return updatePerms((perms) => {
+    if (value == null) delete perms[key];
+    else {
+      if (!value || !["allow", "block"].includes(value.d) ||
+          (value.d === "allow" && !/^[a-f0-9]{64}$/i.test(String(value.hash || "")))) throw new Error("Invalid decision.");
+      perms[key] = value.d === "allow"
+        ? { d: "allow", hash: String(value.hash).toLowerCase(), at: Number(value.at) || Date.now() }
+        : { d: "block", at: Number(value.at) || Date.now() };
+    }
+  });
+}
+function appendLog(entry) {
+  if (!entry || typeof entry !== "object") throw new Error("Invalid log entry.");
+  return log({ host: String(entry.host || ""), url: String(entry.url || ""), file: String(entry.file || ""),
+    ev: String(entry.ev || "note"), note: String(entry.note || "") });
+}
+function clearLog() {
+  logChain = logChain.then(() => chrome.storage.local.set({ log: [] }));
+  return logChain;
+}
+function importDecisions(inc) {
+  if (!inc || typeof inc !== "object" || Array.isArray(inc)) throw new Error("Invalid decisions data.");
+  const entries = Object.entries(inc).filter(([k, v]) => validDecisionKey(k) && v &&
+    (v.d === "block" || (v.d === "allow" && /^[a-f0-9]{64}$/i.test(String(v.hash || "")))));
+  return updatePerms((perms) => entries.forEach(([k, v]) => {
+    perms[k] = v.d === "allow"
+      ? { d: "allow", hash: String(v.hash).toLowerCase(), at: Number(v.at) || Date.now() }
+      : { d: "block", at: Number(v.at) || Date.now() };
+  })).then(() => entries.length);
 }
 
 const reqKey = (tabId) => "req:" + tabId;
@@ -393,6 +442,10 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
     case "setEnabled": return done(setEnabled(msg.on));
     case "setPaused": return done(setPaused(msg.host, msg.pause));
     case "forget": return done(forget(msg.host == null ? null : msg.host, msg.file == null ? null : msg.file).then((n) => ({ n })));
+    case "setDecision": return done(setDecision(msg.key, msg.value));
+    case "appendLog": return done(appendLog(msg.entry));
+    case "clearLog": return done(clearLog());
+    case "importDecisions": return done(importDecisions(msg.perms).then((n) => ({ n })));
     case "rehash": if (!fromPage(sender, "editor.html")) return; return done(rehash(msg.file, msg.hash).then((n) => ({ n })));
     case "toolbox": return done(chrome.tabs.get(msg.tabId).then((t) => queue(t.id, () => openToolbox(t))));
     case "newScript": return done(chrome.tabs.get(msg.tabId).then(editorFor));

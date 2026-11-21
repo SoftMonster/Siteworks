@@ -13,7 +13,8 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $Root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 . (Join-Path $PSScriptRoot 'siteworks-lib.ps1')
-$Version = '1.3.0'
+$manifest = Get-Content -Raw -LiteralPath (Join-Path $Root 'manifest.json') | ConvertFrom-Json
+$Version = [string]$manifest.version
 
 $stdin = [Console]::OpenStandardInput()
 $stdout = [Console]::OpenStandardOutput()

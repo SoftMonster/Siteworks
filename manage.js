@@ -6,13 +6,10 @@ const hashes = {};
 const hashOf = async (file) => (file in hashes) ? hashes[file] : (hashes[file] = await SW.scriptHash(file).catch(() => null));
 const getPerms = async () => (await chrome.storage.local.get("perms")).perms || {};
 const td = (cls, text) => el("td", cls, text);
-const emptyRow = (tb, n, text) => { const c = td("empty", text); c.colSpan = n; tb.append(el("tr")).append(c); };
-async function setPerm(k, v) { const perms = await getPerms(); if (v) perms[k] = v; else delete perms[k]; await chrome.storage.local.set({ perms }); }
+const emptyRow = (tb, n, text) => { const c = td("empty", text); c.colSpan = n; const tr = el("tr"); tr.append(c); tb.append(tr); };
+async function setPerm(k, v) { await UI.bg("setDecision", { key: k, value: v == null ? null : v }); }
 async function note(host, file, ev, detail) {
-  const list = (await chrome.storage.local.get("log")).log || [];
-  list.push({ t: Date.now(), host, url: "", file, ev, note: detail || "changed on the Manage page" });
-  if (list.length > 1000) list.splice(0, list.length - 1000);
-  await chrome.storage.local.set({ log: list });
+  await UI.bg("appendLog", { entry: { host, url: "", file, ev, note: detail || "changed on the Manage page" } });
 }
 
 // ---------------------------------------------------------------- switch + paused websites
@@ -94,9 +91,9 @@ $("importFile").onchange = async () => {
   const inc = o && o.siteWorksDecisions && o.perms; if (!inc || typeof inc !== "object") { UI.toast("No Site Works decisions in that file.", "bad"); return; }
   const good = Object.keys(inc).filter((k) => k.includes("|") && inc[k] && (inc[k].d === "block" || (inc[k].d === "allow" && typeof inc[k].hash === "string")));
   if (!confirm("Import " + good.length + " decision(s) from " + f.name + "?\nThey replace any you have for the same script and website. “Always allow” only applies while the script is unchanged.")) return;
-  const perms = await getPerms(); good.forEach((k) => { perms[k] = { d: inc[k].d, hash: inc[k].hash, at: inc[k].at || Date.now() }; if (inc[k].d === "block") delete perms[k].hash; });
-  await chrome.storage.local.set({ perms }); await note("", "", "decisions imported", good.length + " from " + f.name);
-  UI.toast("Imported " + good.length + " decision(s).", "good");
+  const imported = await UI.bg("importDecisions", { perms: Object.fromEntries(good.map((k) => [k, inc[k]])) });
+  await note("", "", "decisions imported", imported.n + " from " + f.name);
+  UI.toast("Imported " + imported.n + " decision(s).", "good");
 };
 
 // ---------------------------------------------------------------- scripts
@@ -139,7 +136,7 @@ async function renderLog() {
     tb.append(tr);
   }
 }
-$("clear").onclick = async () => { if (confirm("Clear the whole log?")) await chrome.storage.local.set({ log: [] }); };
+$("clear").onclick = async () => { if (confirm("Clear the whole log?")) await UI.bg("clearLog", {}); };
 $("filter").oninput = renderLog;
 
 chrome.storage.onChanged.addListener((ch, area) => {

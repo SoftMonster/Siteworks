@@ -153,9 +153,13 @@ async function setupEdit() {
 
 async function init() {
   idx = await SW.loadIndex();
+  if (file && !idx.files.includes(file)) {
+    UI.toast("That script isn't in the index (was it removed?).", "bad");
+    file = "";
+  }
   if (file) {
-    if (!idx.files.includes(file)) UI.toast("That script isn't in the index (was it removed?).", "bad");
-    try { $("code").value = await SW.scriptText(file); loadedHash = await SW.scriptHash(file); } catch (e) { UI.toast("Couldn't read " + winPath(file), "bad"); }
+    try { $("code").value = await SW.scriptText(file); loadedHash = await SW.scriptHash(file); }
+    catch (e) { UI.toast("Couldn't read " + winPath(file), "bad"); return; }
     $("pageUrl").textContent = pageUrl;
     await setupEdit();
   } else {

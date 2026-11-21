@@ -1,0 +1,7 @@
+# Generated on each machine by Install file helper.cmd
+helper/com.siteworks.helper.json
+
+# Local editor / operating-system files
+.DS_Store
+Thumbs.db
+*.log
