@@ -184,6 +184,9 @@
     const box = document.createElement("div"); box.id = "cs-pl";
     box.innerHTML =
       '<div class="hd"><b class="t">Card Shelf prices</b> <span class="cnt"></span><span style="float:right"><button class="imp" title="Load CardShelf_prices.json (Card Shelf data folder) or cardshelf-prices.json (CardShelfHelper folder). Newer prices win.">Load Card Shelf prices\u2026</button> <button class="rl" title="Re-read the cards Steam has loaded">Reload list</button> <button class="x">Close</button></span>' +
+      '<div class="row"><input type="text" class="search" placeholder="Search cards…" aria-label="Search cards"> ' +
+      '<select class="freshness"><option value="all">All price ages</option><option value="fresh">Fresh (&lt;2 days)</option><option value="aging">Aging (2–14 days)</option><option value="stale">Stale (&gt;14 days)</option><option value="missing">No price</option></select></div>' +
+      '<div class="row summary" aria-live="polite"></div>' +
       '<div class="row">Sort <select class="sort"><option value="pd">Cached price: high \u2192 low</option><option value="pa">Cached price: low \u2192 high</option>' +
       '<option value="ao">Cached: oldest first</option><option value="an">Cached: newest first</option><option value="q">Quantity held</option><option value="nm">Name</option></select>' +
       '<label><input type="checkbox" class="hide"> hide cards with no cached price</label></div>' +
@@ -198,11 +201,15 @@
     const $ = (sel) => box.querySelector(sel);
     S.ui = { btn, box, $, ticked: new Set() };
     $(".sort").value = LS.get("cardShelfPlSort", "pd");
+    $(".search").value = LS.get("cardShelfPlSearch", "");
+    $(".freshness").value = LS.get("cardShelfPlFreshness", "all");
+    $(".search").oninput = () => { LS.set("cardShelfPlSearch", $(".search").value); S.renderList(); };
+    $(".freshness").onchange = () => { LS.set("cardShelfPlFreshness", $(".freshness").value); S.renderList(); };
     $(".hide").checked = !!LS.get("cardShelfPlHide", false);
     $(".dl").value = String(LS.get("cardShelfPlDelay", 3500));
     btn.onclick = () => { const open = box.style.display !== "flex"; box.style.display = open ? "flex" : "none"; if (open) S.renderList(); };
     $(".x").onclick = () => { box.style.display = "none"; };
-    $(".rl").onclick = () => S.renderList();
+    $(".rl").onclick = () => { S.snapshotCaptured = false; S.snapshotCompared = false; S.renderList(); };
     $(".imp").onclick = () => {
       const fi = document.createElement("input"); fi.type = "file"; fi.accept = ".json,application/json";
       fi.onchange = async () => {
@@ -237,15 +244,31 @@
       try { if (typeof window.ShowItemInventory === "function") window.ShowItemInventory(h.appid, h.contextid, h.assetid); else location.hash = h.appid + "_" + h.contextid + "_" + h.assetid; } catch (err) {}
     });
     $(".go").onclick = () => { if (S.run && !S.run.done) { S.run.stop = true; S.status("Stopping after this card\u2026"); } else S.refresh(); };
-    window.addEventListener("hashchange", () => { if (box.style.display === "flex") setTimeout(() => S.renderList(), 800); });
+    window.addEventListener("hashchange", () => { if (box.style.display === "flex") { S.snapshotCaptured = false; S.snapshotCompared = false; setTimeout(() => S.renderList(), 800); } });
   }
   S.status = (t) => { S.ui.$(".st").textContent = t || ""; };
   S.renderList = () => {
     const $ = S.ui.$, mode = $(".sort").value, hide = $(".hide").checked;
     S.held = holdings();
+    const intelligence = window.SiteWorksInventory;
+    const currentSnapshot = Object.fromEntries(Object.entries(S.held).map(([n,h]) => [n,{qty:h.qty}]));
+    const previousSnapshot = LS.get("siteworksInventorySnapshot", null);
+    if (intelligence && previousSnapshot && !S.snapshotCompared) {
+      const delta = intelligence.compareSnapshots(previousSnapshot, currentSnapshot);
+      const changes = delta.added.length + delta.removed.length + delta.quantityChanged.length;
+      if (changes) toast("Loaded inventory view changes since last comparison: " + delta.added.length + " added, " + delta.removed.length + " removed, " + delta.quantityChanged.length + " quantity changes.");
+      S.lastChanges = delta; S.snapshotCompared = true;
+    }
+    // Capture once per explicit list load/view change, not on every DOM redraw.
+    if (!S.snapshotCaptured && Object.keys(currentSnapshot).length) { LS.set("siteworksInventorySnapshot", currentSnapshot); S.snapshotCaptured = true; }
     let rows = Object.keys(S.held).map((n) => { const h = S.held[n], c = lookup(n); return { name: n, label: h.label, qty: h.qty, c }; });
     const total = rows.length, cached = rows.filter((r) => r.c).length;
+    const val = intelligence ? intelligence.valuation(S.held, S.data.prices) : {totalMinor:0,pricedDesigns:cached,unpricedDesigns:total-cached,quantity:Object.values(S.held).reduce((a,h)=>a+h.qty,0)};
+    $(".summary").textContent = "Estimated value: " + (val.totalMinor ? money(walletCur(), val.totalMinor) : "—") + " · " + val.pricedDesigns + "/" + total + " designs priced · " + val.unpricedDesigns + " unpriced · " + val.quantity + " items";
     if (hide) rows = rows.filter((r) => r.c);
+    const query = $(".search").value.trim().toLocaleLowerCase(), ageFilter = $(".freshness").value;
+    if (query) rows = rows.filter((r) => (r.label + " " + r.name).toLocaleLowerCase().includes(query));
+    if (ageFilter !== "all") rows = rows.filter((r) => (intelligence ? intelligence.freshness(r.c && r.c.at) : (r.c ? "fresh" : "missing")) === ageFilter);
     const cmpName = (a, b) => a.label.localeCompare(b.label);
     const price = (r) => (r.c ? r.c.p : null), at = (r) => (r.c ? r.c.at : null);
     const nullsLast = (f, dir) => (a, b) => { const x = f(a), y = f(b); if (x == null && y == null) return cmpName(a, b); if (x == null) return 1; if (y == null) return -1; return (x - y) * dir || cmpName(a, b); };
@@ -259,7 +282,7 @@
         '<td class="n">' + esc(r.label) + '</td><td class="num">' + r.qty + '</td>' +
         '<td class="num" style="color:#fff;font-weight:bold">' + (c ? money(c.cur, c.p) : '<span style="color:#56636f">\u2014</span>') + '</td>' +
         '<td style="color:' + (c ? ageColour(c.at) : "#56636f") + '" title="' + (c ? esc(longStamp(c.at) + " (" + ago(c.at) + ")" + (c.src ? " \u2014 " + c.src : "")) : "") + '">' + (c ? shortStamp(c.at) : "not cached") + '</td>' +
-        '<td class="num">' + (c && c.bid ? money(c.bid.cur, c.bid.p) : "") + '</td></tr>';
+        '<td class="num" title="Highest buy order">' + (c && c.bid ? money(c.bid.cur, c.bid.p) + (intelligence && intelligence.priceSpread(S.data.prices[r.name], S.data.bids[r.name]) != null ? '<small style="display:block;color:#8fa3b5">spread ' + money(c.cur, intelligence.priceSpread(S.data.prices[r.name], S.data.bids[r.name])) + '</small>' : "") : "") + '</td></tr>';
     }).join("") || '<tr><td colspan="6" style="padding:12px">No cards loaded yet \u2014 wait for the inventory to finish loading, then press Reload list.</td></tr>';
   };
   S.refresh = async () => {
@@ -304,7 +327,13 @@
       const low = j && j.lowest_price ? pence(j.lowest_price) : null, med = j && j.median_price ? pence(j.median_price) : null, p = low || med;
       if (!p) { run.miss++; continue; }
       const now = Date.now(), src = low ? "Steam price refresh (inventory page)" : "Steam price refresh (median sale, none listed)";
-      S.data.prices[r.name] = [p, cur, now, src]; S.data.savedAt = now; persist();
+      S.data.prices[r.name] = [p, cur, now, src];
+      S.data.history = S.data.history || {};
+      const history = S.data.history[r.name] || (S.data.history[r.name] = []);
+      if (!history.length || history[history.length - 1][0] !== p || history[history.length - 1][1] !== cur) history.push([p, cur, now]);
+      else history[history.length - 1][2] = now;
+      if (history.length > 90) history.splice(0, history.length - 90);
+      S.data.savedAt = now; persist();
       run.items.push({ market_hash_name: r.name, appid: h.appid, buyer: p, currency: cur, listings: null, price_text: j.lowest_price || j.median_price, source: src });
       run.got++; S.gen++; draw(); S.renderList();
       if (run.items.length >= 50) save();

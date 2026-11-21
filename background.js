@@ -200,7 +200,7 @@ async function run(ctx, file, approvedHash, once, how) {
       target: { tabId: ctx.tabId, documentIds: [ctx.docId] }, world: "MAIN",
       func: (value) => { window.__siteWorksConfig = value; }, args: [config]
     });
-    await chrome.scripting.executeScript({ target: { tabId: ctx.tabId, documentIds: [ctx.docId] }, world: "MAIN", files: ["steam-finance.js", "siteworks-services.js", "sites/" + file] });
+    await chrome.scripting.executeScript({ target: { tabId: ctx.tabId, documentIds: [ctx.docId] }, world: "MAIN", files: ["steam-finance.js", "siteworks-services.js", "inventory-intelligence.js", "sites/" + file] });
     await mark(ctx, [file], "ran");
     log({ host: ctx.host, url: ctx.url, file, ev: "ran", note: how || (once ? "allowed this time" : "always allowed") });
   } catch (e) {

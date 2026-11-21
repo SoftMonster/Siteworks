@@ -37,3 +37,29 @@ R1 establishes shared configuration and page-side services, standardises notific
 
 ## Upgrade notes
 Replace the existing unpacked Site Works folder with the contents of this release, then use `brave://extensions` → Site Works → Reload. Existing permission decisions remain in browser extension storage. The native file helper is versioned from `manifest.json`; if the helper reports a mismatch, run `Install file helper.cmd` from the new release folder.
+
+# Site Works 1.5.0 — R2: Inventory Intelligence
+
+## Scope
+R2 builds on R1 and extends the existing Steam inventory price panel with consolidated valuation, historical price observations, buy-order spread, freshness filters, inventory snapshot comparisons, and text search. The existing inventory cache format remains readable; history is additive.
+
+## Changes
+- Added `inventory-intelligence.js` with pure, reusable valuation, freshness, snapshot-diff and same-currency spread functions.
+- Injected the shared inventory intelligence module before approved site scripts.
+- Inventory panel now shows estimated cached-price value multiplied by held quantities, coverage and unpriced design counts.
+- Added persistent search and price-age filters (fresh under 2 days, aging 2–14 days, stale over 14 days, and missing).
+- Added up to 90 price observations per card design when refreshed; unchanged observations update their timestamp rather than creating redundant points.
+- Added inventory snapshot comparison for additions, removals and quantity changes.
+- Buy-order column now displays the spread only when listing and bid currencies match.
+- Preserved existing Card Shelf price import/export structure and Steam request cooldown behaviour.
+
+## Limitations
+- Valuation is an estimate based on cached lowest listings, not guaranteed sale proceeds; it excludes transaction fees and market liquidity.
+- Price history begins when R2 observes refreshes; historical prices are not reconstructed.
+- Inventory change detection compares snapshots captured when the inventory panel is rendered; it cannot infer whether a change was a sale, trade, purchase or other event.
+- Price refresh still depends on Steam's public price overview response and current page/session availability.
+- No live Steam transactions or browser UI tests were performed.
+
+## Validation
+- `npm test` includes R1 regressions and R2 inventory-intelligence tests.
+- `npm run check` validates JavaScript syntax across the release.
