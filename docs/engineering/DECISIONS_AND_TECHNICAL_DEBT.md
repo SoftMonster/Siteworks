@@ -55,6 +55,34 @@
 | TD-11 | Archived `.old` scripts and trash content in release ZIP | Archive inventory | Low | Define packaging inclusion/exclusion policy |
 | TD-12 | R3–R7 are not implementation specifications | Existing roadmap | Medium | Requirements and acceptance design before scheduling |
 
+## Status after rescue pass (2026-11-21)
+
+| ID | Status | Notes |
+|---|---|---|
+| TD-01 | Open | Unchanged. Needs adapter contract + live compatibility tests. |
+| TD-02 | Open | Unchanged. Do not refactor before live R2 acceptance. |
+| TD-03 | Open | Unchanged. Needs failure-injection tests. |
+| TD-04 | **Open — the main blocker** | No live Brave/Steam evidence exists. See `HANDOVER_RESCUE.md` first-day steps. |
+| TD-05 | Reduced, partly executed | Static review plus 93-check executed self-test on Linux/pwsh 7.7 (all pass, sensitivity verified by mutation). **Windows PowerShell 5.1 run still required.** |
+| TD-06 | Open | Manifest unchanged. Note: there are no content scripts; injection is via `chrome.scripting` after the approval gate. Consider optional host permissions. |
+| TD-07 | **Resolved** | Per-machine helper registration untracked and removed from the release tree; a test fails if absolute user paths reappear in source. |
+| TD-08 | **Resolved** | README.md refreshed; version checked by `tests/consistency.test.cjs`. |
+| TD-09 | **Resolved** | README.txt header and "Included" section corrected; historical sections retained. |
+| TD-10 | **Resolved** | Git history committed, tags `v1.5.0` and `v1.6.9`, CI added. No lockfile needed (zero dependencies). |
+| TD-11 | Open | `.old` files and `trash/` are still tracked. Decide: delete (git history keeps them) or keep. |
+| TD-12 | Open | Unchanged. |
+| TD-13 | New, **Resolved** | Popup showed 1.6.8/HF18 while the build was 1.6.9/HF19, and a test enforced the wrong string. |
+| TD-14 | New, **Resolved** | `release-notes.html` stale (stopped at 1.6.8, duplicated a section, missing 1.6.7/1.6.9). Now generated from `RELEASE_NOTES.md`. |
+| TD-15 | New, Open | Toolbox (`Alt+Shift+K`, menu entry) is wired in `background.js` but `sites/00-toolbox.js` was retired to `.old` in commit `8c3b683`; the feature only shows a notice. Owner decision: restore or remove the UI. |
+| TD-16 | New, Open | 19 hotfixes (1.5.0 → 1.6.9) exist in git as one snapshot commit; per-hotfix history was never recorded. Release notes are the only per-hotfix record. |
+
 ## Decision record template
 
 For future decisions, record: ID, date, owner, status, context, decision, alternatives, rationale, consequences, risks, implementation references, verification evidence and superseded decision (if any).
+
+
+## Current baseline reconciliation — FIX18 (2026-11-21)
+
+The earlier status table is retained as a historical rescue-pass record. Current work is governed by [`../PROJECT_TODO.md`](../PROJECT_TODO.md). In particular, the archive is labelled FIX18 while the visible and embedded `Andrew_next_task.bat` payload still carries the FIX16 build marker. Treat launcher identity as an open P0 issue; do not accept a Windows run until the maintainer reconciles the marker and payload.
+
+Current mapping: TD-01 → TODO-009; TD-02 → TODO-015; TD-03 → TODO-007; TD-04 → TODO-003–008; TD-05 → TODO-004; TD-06 → TODO-010; TD-11 → TODO-012; TD-12 → TODO-016–020; TD-15 → TODO-011; TD-16 → TODO-013. TD-07–TD-10 and TD-13–TD-14 remain resolved as recorded above, subject to ordinary regression checks.

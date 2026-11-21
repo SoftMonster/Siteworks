@@ -1,4 +1,4 @@
-# R2 Acceptance Matrix — HF19
+# R2 Acceptance Matrix — 1.6.9 / R2 HF20 (FIX18 baseline)
 
 ## Status legend
 
@@ -15,17 +15,16 @@
 | R2-04 | Webdata journal records serialisable deltas and filedata is reconciled | architecture; R2.8 tests | SOURCE-OBSERVED + PASS-OFFLINE | Inspect persisted journal and filedata after a multi-batch scan |
 | R2-05 | Partial/unknown data remains visibly partial; unknown quantity is not zero | R2.8 tests | PASS-OFFLINE | Live partial-stop and missing-description UI tests |
 | R2-06 | Design discovery uses stable complete page snapshots, resumes safely and reports progress | R2.7/R2.8 tests | PASS-OFFLINE | Live multi-page discovery, Stop, reload and resume |
-| R2-07 | Price enrichment is separate from inventory; numeric app IDs accepted; cooldown isolated | HF19 tests in `r2.9.test.cjs` | PASS-OFFLINE | Live small-batch market-price test; confirm no inventory coupling |
-| R2-08 | HTTP 429 / access blocks stop price requests and respect cooldown; no probe retry | `r2.2.test.cjs`; HF19 test | PASS-OFFLINE | Controlled live response handling where safe; do not intentionally hammer Steam |
-| R2-09 | Saved price data projects into shared filedata while legacy records remain readable | HF19 test and architecture | SOURCE-OBSERVED + PASS-OFFLINE | Test with a copy of representative legacy data and verify merge/freshness |
+| R2-07 | Price enrichment is separate from inventory; numeric app IDs accepted; cooldown isolated | R2 regression tests in `r2.9.test.cjs` | PASS-OFFLINE | Live small-batch market-price test; confirm no inventory coupling |
+| R2-08 | HTTP 429 / access blocks stop price requests and respect cooldown; no probe retry | `r2.2.test.cjs`; R2 regression test | PASS-OFFLINE | Controlled live response handling where safe; do not intentionally hammer Steam |
+| R2-09 | Saved price data projects into shared filedata while legacy records remain readable | R2 regression test and architecture | SOURCE-OBSERVED + PASS-OFFLINE | Test with a copy of representative legacy data and verify merge/freshness |
 | R2-10 | Search/sort/filter/list operations are read-only and do not start inventory acquisition | architecture and R2.8 tests | PASS-OFFLINE | Live UI interaction test while observing network requests |
 
 ## Offline evidence executed during this handover preparation
 
-- `npm test`: exit code 0; 77 tests, 77 passed, 0 failed, 0 skipped.
-- `npm run check`: exit code 0; 22 JavaScript files syntax-checked.
-- ZIP integrity: verified by Python `zipfile.testzip()` during packaging.
-- These results were freshly executed in the preparation environment; they do not prove live Steam behaviour.
+- FIX18 history records: `npm run verify` PASS on Node.js v22.16.0 / Linux; 87 tests passed, 39 JavaScript files syntax-checked, 125 release-manifest files verified, governance checker and negative cases passed.
+- The result above is a recorded result from the FIX18 engineering step, not a fresh execution during this TODO consolidation.
+- These offline results do not prove live Brave/Steam behaviour or Windows PowerShell 5.1 helper behaviour.
 
 ## Release acceptance decision
 
@@ -47,3 +46,8 @@
 12. Run a small price-enrichment batch separately.
 13. Confirm market cooldown does not prevent inventory viewing/reconstruction.
 14. Save console output, screenshots, journal metadata and test outcome.
+
+
+## Current backlog pointer
+
+Live acceptance is coordinated through [`../PROJECT_TODO.md`](../PROJECT_TODO.md), TODO-003 through TODO-008. This matrix remains the case-by-case acceptance record. Update each row only when the required evidence is actually captured.

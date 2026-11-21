@@ -1,0 +1,570 @@
+{
+  "date": "2026-11-21T14:37:28.237Z",
+  "engine": "pwsh 7.7.0 on linux (NOT Windows PowerShell 5.1)",
+  "node": "v22.23.5",
+  "platform": "linux",
+  "links": {
+    "dir": true,
+    "file": true
+  },
+  "results": [
+    {
+      "group": "legit",
+      "name": "ping reports the manifest version",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"version\":\"1.6.9\",\"root\":\"/tmp/swtest-o7gWkk/root\",\"ps\":\"7.7.0\"}"
+    },
+    {
+      "group": "legit",
+      "name": "ping reports the sandbox as root, not the real repo",
+      "status": "PASS",
+      "detail": "/tmp/swtest-o7gWkk/root"
+    },
+    {
+      "group": "legit",
+      "name": "write creates the file with exact bytes and returns its SHA-256",
+      "status": "PASS",
+      "detail": "{\"ok\":true,\"created\":true,\"hash\":\"5216f0b65b84ea7fe1c51140eee1df1be376337b7a881a986d4df114c1cd6045\"}"
+    },
+    {
+      "group": "legit",
+      "name": "write refuses to overwrite without the overwrite flag",
+      "status": "PASS",
+      "detail": "{\"error\":\"exists\",\"message\":\"sites\\\\Site\\\\ok.js already exists.\"}"
+    },
+    {
+      "group": "legit",
+      "name": "overwrite with a stale expectHash is refused (lost-update guard)",
+      "status": "PASS",
+      "detail": "{\"error\":\"changed\",\"message\":\"The file was changed on disk since you opened it (in another editor?). Reload it first, or save again to overwrite.\"}"
+    },
+    {
+      "group": "legit",
+      "name": "overwrite with the correct expectHash succeeds",
+      "status": "PASS",
+      "detail": "{\"ok\":true}"
+    },
+    {
+      "group": "legit",
+      "name": "hosts writes sites/<Site>/hosts.txt",
+      "status": "PASS",
+      "detail": "{\"ok\":true}"
+    },
+    {
+      "group": "legit",
+      "name": "rebuild produces a valid index.json listing the written script",
+      "status": "PASS",
+      "detail": "{\"ok\":true}"
+    },
+    {
+      "group": "legit",
+      "name": "trash moves the file into trash/, never deletes it",
+      "status": "PASS",
+      "detail": "{\"ok\":true}"
+    },
+    {
+      "group": "legit",
+      "name": "unknown command is refused",
+      "status": "PASS",
+      "detail": "{\"error\":\"unknown\",\"message\":\"Unknown command: format-c\"}"
+    },
+    {
+      "group": "legit",
+      "name": "missing command is refused",
+      "status": "PASS",
+      "detail": "{\"message\":\"Unknown command: \",\"error\":\"unknown\"}"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"../escape.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in ../escape.js"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"..\\\\escape.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in ../escape.js"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/../../escape.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in Site/../../escape.js"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/..\\\\..\\\\escape.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in Site/../../escape.js"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"../outside/escape.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in ../outside/escape.js"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"/abs/escape.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in /abs/escape.js"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"C:\\\\escape.js\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"C:/escape.js\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"\\\\\\\\server\\\\share\\\\escape.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in //server/share/escape.js"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"//server/share/escape.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in //server/share/escape.js"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site//x.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in Site//x.js"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/./x.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in Site/./x.js"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/x.txt\"",
+      "status": "PASS",
+      "detail": "Scripts must end in .js"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/x.js.\"",
+      "status": "PASS",
+      "detail": "Folder or file names can't start or end with a space, or end with a do"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/x.js \"",
+      "status": "PASS",
+      "detail": "Folder or file names can't start or end with a space, or end with a do"
+    },
+    {
+      "group": "hostile write",
+      "name": "\" Site/x.js\"",
+      "status": "PASS",
+      "detail": "Folder or file names can't start or end with a space, or end with a do"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/ x.js/y.js\"",
+      "status": "PASS",
+      "detail": "Folder or file names can't start or end with a space, or end with a do"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/con.js\"",
+      "status": "PASS",
+      "detail": "'con.js' is a name Windows reserves."
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/NUL.js\"",
+      "status": "PASS",
+      "detail": "'NUL.js' is a name Windows reserves."
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/com1.js\"",
+      "status": "PASS",
+      "detail": "'com1.js' is a name Windows reserves."
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/lpt9.js\"",
+      "status": "PASS",
+      "detail": "'lpt9.js' is a name Windows reserves."
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/aux\"",
+      "status": "PASS",
+      "detail": "'aux' is a name Windows reserves."
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/x:stream.js\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/x*.js\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/x?.js\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/x\\\"y.js\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/x<y.js\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/x>y.js\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/x|y.js\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/x\\u0001y.js\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/x\\ny.js\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"Site/x\\u0000.js\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile write",
+      "name": "\"\"",
+      "status": "PASS",
+      "detail": "No file name given."
+    },
+    {
+      "group": "hostile write",
+      "name": "path field missing",
+      "status": "PASS",
+      "detail": "No file name given."
+    },
+    {
+      "group": "hostile write",
+      "name": "path is an object",
+      "status": "PASS",
+      "detail": "Scripts must end in .js"
+    },
+    {
+      "group": "hostile write",
+      "name": "path is an array",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in ../x.js"
+    },
+    {
+      "group": "hostile hosts",
+      "name": "\"../x\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in ../x/hosts.txt"
+    },
+    {
+      "group": "hostile hosts",
+      "name": "\"Site/sub\"",
+      "status": "PASS",
+      "detail": "hosts.txt must be sites\\<Site>\\hosts.txt"
+    },
+    {
+      "group": "hostile hosts",
+      "name": "\"\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in /hosts.txt"
+    },
+    {
+      "group": "hostile hosts",
+      "name": "\"a:b\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile hosts",
+      "name": "\"..\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in ../hosts.txt"
+    },
+    {
+      "group": "hostile hosts",
+      "name": "\"C:\\\\x\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile trash",
+      "name": "\"../outside/canary.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in ../outside/canary.js"
+    },
+    {
+      "group": "hostile trash",
+      "name": "\"Site/../../outside/canary.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in Site/../../outside/canary.js"
+    },
+    {
+      "group": "hostile trash",
+      "name": "\"..\\\\outside\\\\canary.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in ../outside/canary.js"
+    },
+    {
+      "group": "hostile trash",
+      "name": "\"/etc/passwd\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in /etc/passwd"
+    },
+    {
+      "group": "hostile trash",
+      "name": "\"C:\\\\Windows\\\\win.ini\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile edit",
+      "name": "\"../outside/victim.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in ../outside/victim.js"
+    },
+    {
+      "group": "hostile edit",
+      "name": "\"..\\\\x.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in ../x.js"
+    },
+    {
+      "group": "hostile edit",
+      "name": "\"C:\\\\Windows\\\\System32\\\\calc.exe\"",
+      "status": "PASS",
+      "detail": "A file or folder name can't contain : * ? \" < > |"
+    },
+    {
+      "group": "hostile reveal",
+      "name": "\"../outside\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in ../outside"
+    },
+    {
+      "group": "hostile reveal",
+      "name": "\"..\\\\outside\\\\canary.js\"",
+      "status": "PASS",
+      "detail": "Empty folder name, '.' or '..' in ../outside/canary.js"
+    },
+    {
+      "group": "link escape",
+      "name": "write through a directory link",
+      "status": "PASS",
+      "detail": "Symbolic links and junctions are not supported inside the sites folder"
+    },
+    {
+      "group": "link escape",
+      "name": "trash through a directory link",
+      "status": "PASS",
+      "detail": "Symbolic links and junctions are not supported inside the sites folder"
+    },
+    {
+      "group": "link escape",
+      "name": "overwrite a file link",
+      "status": "PASS",
+      "detail": "Symbolic links and junctions are not supported inside the sites folder"
+    },
+    {
+      "group": "link escape",
+      "name": "trash a file link",
+      "status": "PASS",
+      "detail": "Symbolic links and junctions are not supported inside the sites folder"
+    },
+    {
+      "group": "literal names",
+      "name": "\"Site/$(touch SENTINEL).js\"",
+      "status": "PASS",
+      "detail": "{\"ok\":true} created=true sentinel=false"
+    },
+    {
+      "group": "literal names",
+      "name": "\"Site/`touch SENTINEL`.js\"",
+      "status": "PASS",
+      "detail": "{\"ok\":true} created=true sentinel=false"
+    },
+    {
+      "group": "literal names",
+      "name": "\"Site/a;touch SENTINEL;.js\"",
+      "status": "PASS",
+      "detail": "{\"ok\":true} created=true sentinel=false"
+    },
+    {
+      "group": "literal names",
+      "name": "\"Site/a;b.js\"",
+      "status": "PASS",
+      "detail": "{\"ok\":true} created=true sentinel=false"
+    },
+    {
+      "group": "literal names",
+      "name": "\"Site/a'b.js\"",
+      "status": "PASS",
+      "detail": "{\"ok\":true} created=true sentinel=false"
+    },
+    {
+      "group": "literal names",
+      "name": "\"Site/a&b.js\"",
+      "status": "PASS",
+      "detail": "{\"ok\":true} created=true sentinel=false"
+    },
+    {
+      "group": "literal names",
+      "name": "\"Site/a`b.js\"",
+      "status": "PASS",
+      "detail": "{\"ok\":true} created=true sentinel=false"
+    },
+    {
+      "group": "literal names",
+      "name": "\"Site/%PATH%.js\"",
+      "status": "PASS",
+      "detail": "{\"ok\":true} created=true sentinel=false"
+    },
+    {
+      "group": "literal names",
+      "name": "\"Site/$env_x.js\"",
+      "status": "PASS",
+      "detail": "{\"ok\":true} created=true sentinel=false"
+    },
+    {
+      "group": "protocol",
+      "name": "length over the 4 MB cap (header only)",
+      "status": "PASS",
+      "detail": "exit=0 replies=0"
+    },
+    {
+      "group": "protocol",
+      "name": "complete valid write over the 4 MB cap is not executed",
+      "status": "PASS",
+      "detail": "exit=0 replies=0"
+    },
+    {
+      "group": "protocol",
+      "name": "length 100 MB, no body",
+      "status": "PASS",
+      "detail": "exit=0 replies=0"
+    },
+    {
+      "group": "protocol",
+      "name": "negative length",
+      "status": "PASS",
+      "detail": "exit=0 replies=0"
+    },
+    {
+      "group": "protocol",
+      "name": "zero length",
+      "status": "PASS",
+      "detail": "exit=0 replies=0"
+    },
+    {
+      "group": "protocol",
+      "name": "truncated body",
+      "status": "PASS",
+      "detail": "exit=0 replies=0"
+    },
+    {
+      "group": "protocol",
+      "name": "truncated header",
+      "status": "PASS",
+      "detail": "exit=0 replies=0"
+    },
+    {
+      "group": "protocol",
+      "name": "empty stdin",
+      "status": "PASS",
+      "detail": "exit=0 replies=0"
+    },
+    {
+      "group": "protocol",
+      "name": "not JSON",
+      "status": "PASS",
+      "detail": "exit=0 replies=1"
+    },
+    {
+      "group": "protocol",
+      "name": "JSON null",
+      "status": "PASS",
+      "detail": "exit=0 replies=0"
+    },
+    {
+      "group": "protocol",
+      "name": "JSON number",
+      "status": "PASS",
+      "detail": "exit=0 replies=1"
+    },
+    {
+      "group": "protocol",
+      "name": "JSON string",
+      "status": "PASS",
+      "detail": "exit=0 replies=1"
+    },
+    {
+      "group": "protocol",
+      "name": "JSON array",
+      "status": "PASS",
+      "detail": "exit=0 replies=1"
+    },
+    {
+      "group": "protocol",
+      "name": "binary garbage body",
+      "status": "PASS",
+      "detail": "exit=0 replies=1"
+    },
+    {
+      "group": "protocol",
+      "name": "two messages on one connection are both answered",
+      "status": "PASS",
+      "detail": "replies=2"
+    },
+    {
+      "group": "integrity",
+      "name": "helper scripts and manifest unchanged after the whole run",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "group": "integrity",
+      "name": "files outside the sandbox root unchanged (canary, victim)",
+      "status": "PASS",
+      "detail": ""
+    }
+  ]
+}

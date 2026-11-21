@@ -322,3 +322,31 @@ Hotfix 8 replaces the unreliable page-inspection logic introduced in Hotfix 6 an
 - 📚 Updates the webdata/filedata architecture handover with the market-price boundary, shared price projection and future maintenance guidance.
 - 🏷️ Popup/manifest identity: Site Works 1.6.9 · R2 Hotfix 19, built on 1.6.8 · R2 Hotfix 18.
 - 🧪 Automated checks are not a substitute for live Brave/Steam acceptance testing. Live verification of price eligibility, legacy price migration and throttle behaviour remains outstanding.
+
+## R2 Hotfix 20 — Recovery workflow and traceable operations
+
+**Release type:** Project recovery and developer-operations update. The extension remains version 1.6.9; this hotfix does not claim a new Site Works application feature release.
+
+## Changes
+- Adds the stable `Andrew_next_task.bat` entry point for repeatable local diagnostics and recovery tasks.
+- Documents the self-extracting deployment workflow, including backup creation, preservation of the target `.git` directory, explicit replacement confirmation and the prohibition on implicit Git reset, checkout, commit or push operations.
+- Establishes a continuing feedback loop for diagnostic logs, screenshots, test results, error text and pasted terminal output.
+- Adds a separate mandatory launcher protocol covering screenshot capture, clipboard verification, evidence retention, traceable archive history and progress logging.
+- Adds per-fix launcher copies and dated evidence records so that the archive history can be followed across recovery steps.
+- Keeps the extension's application version at 1.6.9 and preserves the R2 Hotfix 19 product changes described above.
+
+## Verification status and limitations
+- The R2 Hotfix 19 application changes remain subject to live Brave/Steam acceptance testing.
+- The recovery launcher is an operational aid, not proof that the extension works in a live browser.
+- Windows PowerShell 5.1 execution of the current launcher still requires user-side validation. Earlier launcher feedback includes PowerShell parser errors; no claim is made here that those errors have been resolved.
+- Automated unit tests and syntax checks are reported separately from browser, Steam and Windows helper acceptance.
+
+
+## Documentation framework consolidation — FIX20
+
+- Establishes `docs/README.md` as the single documentation entry point and `docs/PROJECT_TODO.md` as the sole active backlog.
+- Consolidates launcher operation and evidence rules into `docs/operations/ANDREW_NEXT_TASK.md`; prior FIX-specific launcher notes remain in a single historical change log.
+- Consolidates architecture/component/data references and engineering standards while retaining specialist inventory, security, acceptance, release and decision references.
+- Removes duplicate handover documents, obsolete launcher procedure copies, superseded fix notes and a stale checksum snapshot. Historical step records and release notes remain.
+- Adds Andrew's 2026-11-21 Windows PowerShell parser-error screenshot to project evidence and marks TODO-001 BLOCKED. The launcher defect is recorded, not fixed, in this documentation-only change.
+- No application or launcher source code was changed. Offline verification is reported in the FIX20 handover.

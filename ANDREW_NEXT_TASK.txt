@@ -1,0 +1,32 @@
+SITE WORKS — ANDREW NEXT TASK
+
+ONE-PASTE FEEDBACK LOOP
+  Run the stable root file: Andrew_next_task.bat
+  Paste the final clipboard screenshot into your next ChatGPT response.
+  Add any manual requests in ordinary text in the same message.
+  You do not need to interpret the diagnostics.
+
+DETAILED CONTRACT
+  docs\operations\FEEDBACK_LOOP_CONTRACT.md
+  Operator guide: docs\operations\ANDREW_NEXT_TASK.md
+  Sole active backlog: docs\PROJECT_TODO.md
+
+CURRENT BLOCKER
+  The last supplied Windows screenshot (2026-11-21) shows a PowerShell
+  parser failure in the generated temporary script: ampersand (&) rejected
+  at line 139, followed by cascading parser errors; exit code 1.
+  This launcher has NOT been repaired or accepted. Do not rerun this known
+  failing build. The next maintainer action is to repair and validate the
+  exact generated payload under Windows PowerShell 5.1.
+
+EXPECTED HAND-OFF
+  A successful run displays a FINAL FEEDBACK CAPSULE and creates a unique
+  folder under %TEMP%\SiteWorks-Diagnostics\<run-id>\ containing run.txt,
+  run.json, final-screen.png and manifest.sha256. The screenshot must show
+  build/run identity, environment, stage results, exit codes, first failure
+  and log path. Clipboard image presence must be verified by read-back.
+
+SAFETY
+  No silent installs, Administrator elevation, Git reset/clean/commit/push,
+  browser/Steam data changes, or automatic Steam retries after HTTP 429.
+  Preserve user data and redact secrets/account identifiers from evidence.
