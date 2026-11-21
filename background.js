@@ -20,7 +20,7 @@
 // from Site Works' own pages, menus and shortcuts - never from a website or a
 // script running in one.
 
-importScripts("match.js");
+importScripts("match.js", "config.js");
 
 const PROMPT = "prompt.html";
 const TOOLBOX = "00-toolbox.js";        // sites\00-toolbox.js, opened by Alt+Shift+K / the right-click menu
@@ -32,6 +32,23 @@ async function getPerms() { return (await chrome.storage.local.get("perms")).per
 async function getSettings() {
   const o = await chrome.storage.local.get(["enabled", "paused"]);
   return { enabled: o.enabled !== false, paused: Array.isArray(o.paused) ? o.paused : [] };
+}
+async function getConfig() {
+  const o = await chrome.storage.local.get("config");
+  const config = SWConfig.normalize(o.config);
+  if (!o.config || JSON.stringify(o.config) !== JSON.stringify(config)) await chrome.storage.local.set({ config });
+  return config;
+}
+let configChain = Promise.resolve();
+function saveConfig(patch) {
+  const next = configChain.then(async () => {
+    const current = await getConfig();
+    const config = SWConfig.merge(current, patch);
+    await chrome.storage.local.set({ config });
+    return config;
+  });
+  configChain = next.catch((e) => console.warn("Site Works config:", e));
+  return next;
 }
 
 let permChain = Promise.resolve();
@@ -177,7 +194,13 @@ async function run(ctx, file, approvedHash, once, how) {
   if (hash !== approvedHash) { await request(ctx, [{ file, hash, reason: "changed" }]); return; }
   if (!once && SW.verdict(await getPerms(), ctx.host, file, hash) !== "allow") { await request(ctx, [{ file, hash, reason: "new" }]); return; }
   try {
-    await chrome.scripting.executeScript({ target: { tabId: ctx.tabId, documentIds: [ctx.docId] }, world: "MAIN", files: ["sites/" + file] });
+    const config = await getConfig();
+    // Configuration contains user preferences only, never permissions or secrets.
+    await chrome.scripting.executeScript({
+      target: { tabId: ctx.tabId, documentIds: [ctx.docId] }, world: "MAIN",
+      func: (value) => { window.__siteWorksConfig = value; }, args: [config]
+    });
+    await chrome.scripting.executeScript({ target: { tabId: ctx.tabId, documentIds: [ctx.docId] }, world: "MAIN", files: ["steam-finance.js", "siteworks-services.js", "sites/" + file] });
     await mark(ctx, [file], "ran");
     log({ host: ctx.host, url: ctx.url, file, ev: "ran", note: how || (once ? "allowed this time" : "always allowed") });
   } catch (e) {
@@ -439,6 +462,8 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   switch (msg.siteWorks) {
     case "decide": if (!fromPage(sender, PROMPT)) return; return done(queue(msg.tabId, () => decide(msg)));
     case "review": return done(queue(msg.tabId, async () => { const req = await getReq(msg.tabId); if (req) await showPrompt(req, true); }));
+    case "getConfig": return done(getConfig());
+    case "setConfig": return done(saveConfig(msg.config));
     case "setEnabled": return done(setEnabled(msg.on));
     case "setPaused": return done(setPaused(msg.host, msg.pause));
     case "forget": return done(forget(msg.host == null ? null : msg.host, msg.file == null ? null : msg.file).then((n) => ({ n })));

@@ -47,6 +47,47 @@ $("rebuild").onclick = async () => { try { const r = await UI.helper("rebuild");
 $("openFolder").onclick = () => UI.helper("reveal", {}).catch((e) => UI.toast(e.message, "bad"));
 $("keys").onclick = () => chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
 
+// ---------------------------------------------------------------- shared configuration
+const CONFIG_FIELDS = ["cfgCurrency", "cfgMinPrice", "cfgUndercut", "cfgMaxListings", "cfgInterval", "cfgDuration", "cfgNotifications"];
+function showConfig(c) {
+  $("cfgCurrency").value = String(c.market.currencyId);
+  $("cfgMinPrice").value = c.market.quickSellMinPence;
+  $("cfgUndercut").value = c.market.undercutPence;
+  $("cfgMaxListings").value = c.safety.maxListingsPerRun;
+  $("cfgInterval").value = c.safety.requestIntervalMs;
+  $("cfgDuration").value = c.notifications.durationMs;
+  $("cfgNotifications").checked = c.notifications.enabled;
+  $("cfgSafety").textContent = "Sell confirmation: mandatory · Bulk-delete confirmation: mandatory";
+}
+async function loadConfig() {
+  try { showConfig(await UI.bg("getConfig", {})); }
+  catch (e) { $("configStatus").textContent = "Could not load settings: " + e.message; }
+}
+$("saveConfig").onclick = async () => {
+  const patch = { market: {
+    currencyId: Number($("cfgCurrency").value),
+    quickSellMinPence: Number($("cfgMinPrice").value),
+    undercutPence: Number($("cfgUndercut").value)
+  }, safety: {
+    maxListingsPerRun: Number($("cfgMaxListings").value),
+    requestIntervalMs: Number($("cfgInterval").value)
+  }, notifications: {
+    durationMs: Number($("cfgDuration").value), enabled: $("cfgNotifications").checked
+  }};
+  try {
+    const saved = await UI.bg("setConfig", { config: patch });
+    showConfig(saved); $("configStatus").textContent = "Saved."; UI.toast("Shared configuration saved.", "good");
+  } catch (e) { $("configStatus").textContent = e.message; UI.toast("Configuration was not saved: " + e.message, "bad"); }
+};
+$("resetConfig").onclick = async () => {
+  if (!confirm("Restore Site Works configuration defaults?")) return;
+  try {
+    const defaults = SWConfig.defaults();
+    const saved = await UI.bg("setConfig", { config: defaults });
+    showConfig(saved); $("configStatus").textContent = "Defaults restored.";
+  } catch (e) { $("configStatus").textContent = e.message; }
+};
+
 // ---------------------------------------------------------------- remembered decisions
 
 async function renderPerms() {
@@ -144,5 +185,6 @@ chrome.storage.onChanged.addListener((ch, area) => {
   if (ch.perms) { renderPerms(); renderScripts(); }
   if (ch.log) renderLog();
   if (ch.enabled || ch.paused) renderSwitch();
+  if (ch.config) showConfig(SWConfig.normalize(ch.config.newValue));
 });
-renderSwitch(); checkHelper(); renderPerms(); renderScripts(); renderLog();
+renderSwitch(); checkHelper(); loadConfig(); renderPerms(); renderScripts(); renderLog();

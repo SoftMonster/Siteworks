@@ -1,27 +1,39 @@
-# Site Works maintenance update
+# Site Works 1.4.0 — R1: Reliability & Configuration
 
-## Preserved behaviour
+## Scope
+R1 establishes shared configuration and page-side services, standardises notification behaviour, and adds mandatory safeguards to the existing automated Steam listing workflows. It preserves the Manifest V3 extension architecture, folder matching, default-deny/hash-bound permission gate, popup/request/editor/Manage flows, native helper and existing site scripts.
 
-This update retains the existing Manifest V3 extension, folder-based matching, default-deny/hash-bound permission gate, popup/request/editor/Manage flows, native helper, and bundled site scripts. It does not activate the archived toolbox or reinterpret userscript metadata.
+## New shared infrastructure
+- Added `config.js`, a versioned configuration schema with validation, bounded numeric values and immutable safety requirements.
+- Added central configuration storage and serialized updates in the service worker.
+- Added a Shared configuration section to Manage for currency, quick-sell threshold, undercut, per-run listing cap, minimum request interval and notification preferences.
+- Added `steam-finance.js` with reusable integer-minor-unit buyer-total and seller-receives calculations.
+- Added `siteworks-services.js` with accessible, configurable page notifications.
+- Site Works injects the normalized user preferences and shared page utilities before running an approved site script.
 
-## Repairs and hardening
+## Safety and reliability changes
+- Quick Sell now always requires confirmation.
+- Quick Sell is capped at the configured number of successful listings per run (default 20; maximum configurable value 500).
+- Quick Sell enforces a minimum 4-second interval between item-price lookups/listing operations.
+- HTTP 429 causes the direct quick-sell workflow to stop without an automatic retry.
+- The Card Shelf quick-sell workflow uses the shared threshold, per-run cap and request interval.
+- Bulk listing removal no longer replaces `window.confirm` or automatically clicks confirmation buttons. It displays a destructive-action preview and leaves Steam confirmation dialogs under user control.
+- Manage-page notifications now use accessible status/alert semantics and consistent severity levels.
 
-- Fixed the Manage page's empty-table rendering: `Element.append()` returns `undefined`, so chaining `.append()` caused a runtime exception.
-- Routed Manage-page permission changes, imports, and log mutations through the service worker's serialized storage queues to avoid lost updates.
-- Added validation and normalization for imported and edited permission records; failed permission writes now reach the caller rather than being silently reported as successful.
-- Hardened index loading against malformed paths and control characters.
-- Replaced hand-built PowerShell index JSON with `ConvertTo-Json`, avoiding malformed JSON for valid names containing quotes or backslashes.
-- Added rejection of symlinks/junctions within the helper's `sites` path to prevent lexical path checks being bypassed.
-- Derived the native helper's reported version from `manifest.json`.
-- Removed a committed native-host manifest containing a machine-specific absolute Windows path; the installer generates it locally.
-- Added automated tests for the folder/host matching rules and a JavaScript syntax-check command.
-- Prevented the editor from attempting to load a file that is not present in the generated index.
+## Compatibility
+- Existing stored permissions, including SHA-256-bound allow decisions, are preserved.
+- Existing settings (`enabled`, `paused`, `perms`, `log`) are preserved; the new `config` key is additive.
+- Scripts run directly in Tampermonkey without Site Works still use safe local defaults, but do not receive Site Works' central configuration/services.
 
 ## Validation performed
-
-- `npm test`: 8 matching and permission tests pass.
-- `npm run check`: syntax validation passes for all 18 active JavaScript files.
+- `npm test`: 14 tests passed (existing matching/permission tests plus configuration, fee arithmetic and safety regression tests).
+- `npm run check`: 21 JavaScript files passed Node syntax validation.
 
 ## Validation not performed
+- No live Brave/Chromium browser session was available for UI smoke testing.
+- No live Steam market or inventory transactions were performed.
+- Windows PowerShell/native messaging installation was not executed in this environment.
+- Steam DOM workflows remain dependent on the current Steam page structure and must be smoke-tested manually before real transactions.
 
-A Chromium/Brave browser session and Windows PowerShell are not available in this build environment. Native messaging, browser UI flows, registry installation, and the bundled Steam scripts therefore still require an on-machine smoke test. The PowerShell changes were reviewed but not executed here.
+## Upgrade notes
+Replace the existing unpacked Site Works folder with the contents of this release, then use `brave://extensions` → Site Works → Reload. Existing permission decisions remain in browser extension storage. The native file helper is versioned from `manifest.json`; if the helper reports a mismatch, run `Install file helper.cmd` from the new release folder.

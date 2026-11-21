@@ -5,7 +5,6 @@
   document.getElementById('clearListingsBtn')?.remove();
   document.getElementById('clearListingsTip')?.remove();
   document.getElementById('clearListingsStyle')?.remove();
-  clearInterval(window.__autoConfirm);
   clearInterval(window.__clearPlacer);
 
   const KEY = 'clearListingsOffsets';
@@ -22,20 +21,8 @@
   const isOurs = e => (btn && btn.contains(e)) || e.id === 'clearListingsTip';
   const hitAt = (x, y) => document.elementsFromPoint(x, y).find(e => !isOurs(e)) || null;
 
-  // ---- Auto-confirm popups (only while running) ----
-  const YES = /^(yes\b|ok$|confirm|remove|delete|accept|continue)/i;
-  const NO  = /^(no$|cancel|close)/i;
-  const confirmPopups = () => {
-    for (const m of document.querySelectorAll('.newmodal, [class*="modal" i], [class*="dialog" i], [role=dialog], .swal2-popup')) {
-      if (!visible(m)) continue;
-      const b = [...m.querySelectorAll('button, a, [role=button], [class*="btn" i], input[type=button], input[type=submit]')]
-        .filter(visible)
-        .find(x => { const t = (x.value || x.textContent).trim(); return YES.test(t) && !NO.test(t); });
-      if (b) { console.log('Auto-confirm:', (b.value || b.textContent).trim()); b.click(); }
-    }
-  };
-  const startAutoConfirm = () => { clearInterval(window.__autoConfirm); window.__autoConfirm = setInterval(confirmPopups, 400); };
-  const stopAutoConfirm  = () => clearInterval(window.__autoConfirm);
+  // R1 safety: never auto-confirm Steam dialogs. The user must approve each
+  // destructive confirmation presented by Steam itself.
 
   // ---- Locate checkbox & bin ----
   const autoFind = () => {
@@ -188,11 +175,11 @@
   async function run() {
     if (!getBin(true)) { alert('Bin icon not found.'); return; }
     stop = false;
-    const origConfirm = window.confirm; window.confirm = () => true;
     let last = getCount();
-    if (last === null) { alert('Could not read the listings count.'); window.confirm = origConfirm; return; }
+    if (last === null) { alert('Could not read the listings count.'); return; }
+    if (last === 0) { alert('There are no active sell listings to remove.'); return; }
+    if (!confirm('Remove your active Steam Market sell listings?\n\nListings currently shown: ' + last + '.\nThis operation is destructive. Steam may show additional confirmation dialogs; those will NOT be auto-approved. Click the Site Works button again to stop.')) return;
     setState('running', last);
-    startAutoConfirm();
     let stalls = 0;
 
     while (!stop && last > 0) {
@@ -209,16 +196,13 @@
       }
       if (now < last) { stalls = 0; last = now; }
       else if (++stalls >= 3) {
-        stopAutoConfirm();
         if (confirm('No progress after 3 attempts. Re-teach the checkbox/bin positions?')) {
-          if (await teach()) { stalls = 0; startAutoConfirm(); continue; }
+          if (await teach()) { stalls = 0; continue; }
         }
         break;
       }
     }
 
-    stopAutoConfirm();
-    window.confirm = origConfirm;
     setState(stop ? 'stopped' : 'ready', getCount() ?? '');
     place();
     console.log(stop ? 'Stopped.' : `Finished. ${getCount()} listings remaining.`);

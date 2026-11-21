@@ -330,8 +330,11 @@
 // ---------------------------------------------------------------------------
 (() => {
   if (!/steamcommunity\.com$/.test(location.hostname) || !/\/inventory/.test(location.pathname)) return;
-  const QS_MIN_PRICE = 0.14;          // sell only when the Quick sell price is OVER this
-  const DELAY = { afterSelect: 1500, afterSell: 4000, afterPage: 3000, buttonTimeout: 10000 };
+  const CFG = window.__siteWorksConfig || {};
+  const QS_MIN_PRICE = Math.max(1, Number(CFG.market && CFG.market.quickSellMinPence) || 14) / 100;
+  const QS_MAX_LISTINGS = Math.max(1, Math.min(500, Math.round(Number(CFG.safety && CFG.safety.maxListingsPerRun) || 20)));
+  const REQUEST_DELAY = Math.max(4000, Math.round(Number(CFG.safety && CFG.safety.requestIntervalMs) || 4000));
+  const DELAY = { afterSelect: REQUEST_DELAY, afterSell: REQUEST_DELAY, afterPage: REQUEST_DELAY, buttonTimeout: 10000 };
 
   const old = document.getElementById("cs-qs-btn"); if (old) old.remove();
   const btn = document.createElement("button");
@@ -371,8 +374,8 @@
       alert("The page is too narrow, so Steam is using its mobile layout and the Quick sell button won't appear.\n\nUndock DevTools (\u22ee \u2192 Dock side \u2192 Undock) or widen the window, then click again.");
       return;
     }
-    if (!confirm("Quick sell every card design whose Quick sell price is over " + Math.round(QS_MIN_PRICE * 100) + "p?\n\n" +
-                 "It works through every page from the one you're on, one copy per design, and lists each on the Market at that price.\n" +
+    if (!confirm("Quick sell up to " + QS_MAX_LISTINGS + " card designs whose Quick sell price is over " + Math.round(QS_MIN_PRICE * 100) + "p?\n\n" +
+                 "It works through inventory pages, one copy per design. Minimum request interval: " + REQUEST_DELAY + "ms.\n" +
                  "Click the button again to stop.")) return;
     running = true; window.stopQuickSell = false;
     btn.style.background = "#a33";
@@ -380,10 +383,10 @@
     let sold = 0, skipped = 0, noBtn = 0;
     const show = (pg) => { btn.textContent = "Stop quick sell \u00b7 page " + pg + " \u00b7 sold " + sold; };
     try {
-      for (let pg = 1; pg <= 1000 && !window.stopQuickSell; pg++) {
+      for (let pg = 1; pg <= 1000 && !window.stopQuickSell && sold < QS_MAX_LISTINGS; pg++) {
         show(pg);
         for (const item of pageItems()) {
-          if (window.stopQuickSell) break;
+          if (window.stopQuickSell || sold >= QS_MAX_LISTINGS) break;
           const key = designKey(item);
           if (seen.has(key)) continue;
           seen.add(key);
@@ -401,6 +404,7 @@
             await sleep(DELAY.afterSell);
           } else { skipped++; console.log("  \u2013 " + name + ": " + price + " not over " + QS_MIN_PRICE + ", skipped"); }
         }
+        if (sold >= QS_MAX_LISTINGS) break;
         const next = document.querySelector("#pagebtn_next");
         if (!next || next.classList.contains("disabled") || window.stopQuickSell) break;
         const firstBefore = pageItems()[0];

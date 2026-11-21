@@ -43,9 +43,10 @@ var UI = (() => {
 
   function toast(text, kind) {
     let t = $("sw-toast");
-    if (!t) { t = el("div"); t.id = "sw-toast"; document.body.append(t); }
-    t.textContent = text; t.className = "show " + (kind || "");
-    clearTimeout(t._h); t._h = setTimeout(() => { t.className = ""; }, kind === "bad" ? 7000 : 3500);
+    if (!t) { t = el("div"); t.id = "sw-toast"; t.setAttribute("role", kind === "bad" ? "alert" : "status"); t.setAttribute("aria-live", kind === "bad" ? "assertive" : "polite"); document.body.append(t); }
+    const level = ["good", "bad", "warn", "info"].includes(kind) ? kind : "info";
+    t.textContent = text; t.className = "show " + level;
+    clearTimeout(t._h); t._h = setTimeout(() => { t.className = ""; }, level === "bad" ? 7000 : 5000);
   }
 
   function download(name, text) {
@@ -53,5 +54,5 @@ var UI = (() => {
     document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   }
 
-  return { $, el, winPath, nicePath, send, bg, helper, copy, toast, download };
+  return { $, el, winPath, nicePath, send, bg, helper, copy, toast, notify: toast, download };
 })();

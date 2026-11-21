@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Steam Quick Sell >14p
 // @namespace    local.steam.quicksell
-// @version      4.5
+// @version      4.6
 // @description  One button: clicks each unique card on the current inventory page, waits for the Steam Suite "Lowest" price to appear for it, then lists it 1p under that price if the result is over 14p.
 // @match        https://steamcommunity.com/id/*/inventory*
 // @match        https://steamcommunity.com/profiles/*/inventory*
@@ -16,17 +16,21 @@
   window.__qsOne = true;
 
   // ================= settings =================
-  const MIN_PRICE      = 14;    // pence: sell only when the quick sell price is OVER this
-  const UNDERCUT       = 1;     // pence under the price Steam shows in the item details
+  const CFG            = window.__siteWorksConfig || {};
+  const MIN_PRICE      = Math.max(1, Math.round(Number(CFG.market && CFG.market.quickSellMinPence) || 14)); // pence
+  const UNDERCUT_RAW  = Number(CFG.market && CFG.market.undercutPence);
+  const UNDERCUT       = Math.max(0, Math.round(Number.isFinite(UNDERCUT_RAW) ? UNDERCUT_RAW : 1)); // pence
+  const MAX_LISTINGS   = Math.max(1, Math.min(500, Math.round(Number(CFG.safety && CFG.safety.maxListingsPerRun) || 20)));
+  const REQUEST_DELAY  = Math.max(4000, Math.round(Number(CFG.safety && CFG.safety.requestIntervalMs) || 4000));
   const FOIL_ONLY      = true;  // true = only visit foil cards (non-foil are skipped instantly, without clicking)
   const ALL_PAGES      = true;  // true = keep going through every page of the inventory, false = current page only
   const MAX_FAILS      = 10;    // the ONLY automatic stop: this many listings in a row rejected by Steam
-  const ITEM_DELAY     = 2500;  // ms between cards (each click makes Steam fetch a price, so don't go too fast)
-  const SELL_DELAY     = 3000;  // ms after listing a card
+  const ITEM_DELAY     = REQUEST_DELAY; // minimum delay between price lookups
+  const SELL_DELAY     = Math.max(REQUEST_DELAY, 4000); // delay after listing
   const SELECT_TIMEOUT = 6000;  // ms to wait for a click to select the card
   const PRICE_TIMEOUT  = 20000; // ms to wait for a price to appear after clicking a card (then that card is skipped and it moves on)
   const PRICE_SOURCE   = 'either'; // 'either' = Steam Suite "Lowest", else Steam's "Starting at"; or 'suite' / 'steam' to use just one
-  const CONFIRM        = false; // true = ask "are you sure?" before starting
+  const CONFIRM        = true;  // R1: transaction confirmation is mandatory
   // ============================================
 
   // ---------- helpers ----------
@@ -242,7 +246,7 @@
       toast('The page is too narrow, so Steam is using its mobile layout and the item details won\'t show a price.\nWiden the window (or undock DevTools) and click again.', 15000); return;
     }
     if (!sessionId()) { toast('Could not find your Steam session. Reload the page and try again.'); return; }
-    if (CONFIRM && !confirm('Quick sell every unique card on this page whose quick sell price is over ' + MIN_PRICE + 'p?')) return;
+    if (CONFIRM && !confirm('Quick sell up to ' + MAX_LISTINGS + ' unique foil cards across the inventory whose quick-sell price is over ' + MIN_PRICE + 'p?\n\nUndercut: ' + UNDERCUT + 'p. Minimum interval: ' + REQUEST_DELAY + 'ms.\nYou can stop the run at any time.')) return;
 
     running = true; stop = false;
     const oldToast = document.getElementById('qs-one-toast'); if (oldToast) oldToast.remove();
@@ -252,12 +256,12 @@
     let why = '', pageNo = 1, noPriceRun = 0, failRun = 0, lastFail = '', lastDiag = '';
 
     try {
-      for (; pageNo <= 1000 && !stop; pageNo++) {
+      for (; pageNo <= 1000 && !stop && stats.sold < MAX_LISTINGS; pageNo++) {
         const tiles = pageTiles();
         if (!tiles.length) { why = 'no cards visible on this page.'; break; }
         log('page ' + pageNo + ': ' + tiles.length + ' items');
 
-        for (let t = 0; t < tiles.length && !stop; t++) {
+        for (let t = 0; t < tiles.length && !stop && stats.sold < MAX_LISTINGS; t++) {
           const info = tileInfo(tiles[t]);
           if (seen.has(info.key)) continue;           // one visit per unique card
           seen.add(info.key);
@@ -298,15 +302,13 @@
           if (selectedId() !== info.assetid) { stats.noPrice++; log('– ' + (info.label || info.name) + ': selection changed before listing, skipped'); continue; }
 
           let s;
-          for (let attempt = 0; attempt < 4 && !stop; attempt++) {
-            try { s = await sellOne(info, receive); } catch (e) { s = { success: false, message: e.message }; }
-            if (!s.rateLimited) break;
-            log('Steam rate-limited the listing request (429). Waiting 60s, then trying again.');
-            btn.textContent = 'Steam says slow down - waiting 60s…';
-            await sleep(60000);
+          try { s = await sellOne(info, receive); } catch (e) { s = { success: false, message: e.message }; }
+          if (s && s.rateLimited) {
+            why = 'Steam rate-limited the listing request (HTTP 429). No automatic retry was made; stop and wait before trying again.';
+            log(why);
+            break;
           }
           if (!s) break;
-          if (s.rateLimited) { s = { success: false, message: 'rate limited (429)' }; }
           if (s.success) {
             stats.sold++; failRun = 0;
             btn.textContent = 'Stop · page ' + pageNo + ' · sold ' + stats.sold;
@@ -319,6 +321,7 @@
             await sleep(ITEM_DELAY);
           }
         }
+        if (stats.sold >= MAX_LISTINGS) why = 'per-run safety limit reached (' + MAX_LISTINGS + ' listings).';
         if (why || stop || !ALL_PAGES) break;
 
         const next = document.querySelector('#pagebtn_next');
@@ -347,5 +350,5 @@
     }
   };
 
-  console.log('Quick sell >' + MIN_PRICE + 'p loaded.');
+  console.log('Quick sell >' + MIN_PRICE + 'p loaded; maximum ' + MAX_LISTINGS + ' listings per run.');
 })();

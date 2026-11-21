@@ -189,3 +189,16 @@ INCLUDED
   sites\Steamworks\inventory\steam-inventory-prices.js - the Card Shelf prices
   button (cached prices, sortable list, Refresh) and the green
   "Quick sell over 14p" button, on any Steam inventory page.
+
+
+R1 / VERSION 1.4.0
+------------------
+R1 adds a shared configuration panel to Manage. Market preferences, request pacing, per-run listing limits and notification preferences are stored centrally and supplied to Site Works scripts when they run. Sell and bulk-delete confirmations are mandatory.
+
+The Steam quick-sell script now requires an explicit confirmation, limits a run to the configured number of listings (default 20), uses a minimum 4-second request interval, and makes no automatic retry after HTTP 429. The inventory price helper's quick-sell workflow also uses the shared threshold, request interval and per-run limit.
+
+The bulk listing removal script no longer intercepts window.confirm or auto-clicks confirmation dialogs. It shows a destructive-action preview and leaves Steam's own confirmation dialogs for the user to approve.
+
+Site Works-managed scripts receive window.__siteWorksConfig, window.SiteWorksFinance and window.SiteWorksNotify. These are page-side preferences/utilities, not permission credentials.
+
+Validation: npm test (14 tests) and npm run check (21 JavaScript files) pass. Brave UI, live Steam interactions and Windows PowerShell/native messaging still require on-device testing.

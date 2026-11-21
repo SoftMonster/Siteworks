@@ -1,5 +1,7 @@
 # Site Works
 
+**Release 1.4.0 (R1 — Reliability & Configuration)**
+
 A Brave/Chromium extension that runs your own scripts on websites, picked by folder —
 `sites\Steamworks\inventory\*.js` runs on Steam pages whose path contains `inventory` —
 and only after you allow each script on each website.
@@ -9,7 +11,10 @@ and only after you allow each script on each website.
 - **Script editor:** new scripts for the page you're on, with a live "will this match?" check; saves straight into `sites\` and rebuilds the index through the optional file helper.
 - **Copy files:** pick scripts and local files and copy them as one Markdown/text block.
 - **Toolbox** (`sites\00-toolbox.js`): reload every…, unblock copy/right-click, dark mode, video speed, picture-in-picture, copy tables/links/Markdown, remove sticky overlays, and more.
-- **Manage page:** decisions (revoke, export, import), scripts, helper status and a full log.
+- **Manage page:** decisions (revoke, export, import), scripts, helper status, shared configuration and a full log.
+- **Shared configuration:** centrally stored market preferences, request pacing, per-run listing cap and notification preferences; safety confirmations are mandatory.
+- **Shared page services:** common Steam fee arithmetic and accessible notifications are made available to Site Works-managed scripts.
+- **Trading safeguards:** quick-sell requires confirmation, is capped per run, observes a minimum 4-second request interval and stops without retry after HTTP 429. Bulk listing removal no longer auto-confirms Steam dialogs.
 
 See **README.txt** for install steps, folder rules and details.
 
@@ -25,4 +30,4 @@ See **README.txt** for install steps, folder rules and details.
 
 ## Development checks
 
-Requires Node.js 18 or later. Run `npm test` for folder-matching tests and `npm run check` to syntax-check the active JavaScript files. These checks do not replace a Brave/Chromium smoke test or a Windows PowerShell/native-messaging test.
+Requires Node.js 18 or later. Run `npm test` for matching, configuration, fee arithmetic and safety-regression tests; run `npm run check` to syntax-check JavaScript files. These checks do not replace a Brave/Chromium smoke test or a Windows PowerShell/native-messaging test.

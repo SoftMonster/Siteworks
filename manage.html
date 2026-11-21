@@ -24,6 +24,23 @@
     </div>
   </div>
 
+  <h2>Shared configuration</h2>
+  <p class="dim">These preferences are stored centrally and supplied to Site Works scripts when they run. Safety confirmations are mandatory in R1 and cannot be disabled.</p>
+  <div class="card config-card">
+    <div class="config-grid">
+      <label>Market currency
+        <select id="cfgCurrency"><option value="1">USD</option><option value="2">GBP</option><option value="3">EUR</option><option value="5">RUB</option><option value="7">BRL</option><option value="8">JPY</option><option value="20">CAD</option><option value="21">AUD</option></select>
+      </label>
+      <label>Quick-sell minimum (pence)<input id="cfgMinPrice" type="number" min="1" max="100000" step="1"></label>
+      <label>Undercut (pence)<input id="cfgUndercut" type="number" min="0" max="10000" step="1"></label>
+      <label>Maximum listings per run<input id="cfgMaxListings" type="number" min="1" max="500" step="1"></label>
+      <label>Minimum request interval (ms)<input id="cfgInterval" type="number" min="4000" max="120000" step="500"></label>
+      <label>Notification duration (ms)<input id="cfgDuration" type="number" min="1500" max="15000" step="500"></label>
+    </div>
+    <div class="bar" style="margin-top:10px"><label class="switch"><input type="checkbox" id="cfgNotifications"><span>Show notifications</span></label><span class="dim" id="cfgSafety">Sell and bulk-delete confirmations: mandatory</span></div>
+    <div class="bar"><button id="saveConfig" class="go">Save configuration</button><button id="resetConfig">Restore defaults</button><span id="configStatus" class="dim" role="status" aria-live="polite"></span></div>
+  </div>
+
   <h2>Remembered decisions</h2>
   <div class="bar"><button id="forget" class="danger">Forget all decisions</button><button id="export">Export decisions…</button><button id="import">Import decisions…</button><input type="file" id="importFile" accept=".json,application/json" class="hide"></div>
   <div class="wrap"><table><thead><tr><th>Website</th><th>Script</th><th>Decision</th><th>Since</th><th>Current file</th><th></th></tr></thead><tbody id="perms"></tbody></table></div>
@@ -37,6 +54,7 @@
   <div class="wrap"><table><thead><tr><th>When</th><th>Website</th><th>Script</th><th>Event</th><th>Detail</th></tr></thead><tbody id="log"></tbody></table></div>
 </main>
 <script src="match.js"></script>
+<script src="config.js"></script>
 <script src="ui.js"></script>
 <script src="manage.js"></script>
 </body></html>
