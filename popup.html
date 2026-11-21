@@ -3,6 +3,9 @@
 <style>
   body{width:400px;margin:0;padding:12px 14px;background:#1b2838;color:#c6d4df;font:12px/1.5 "Segoe UI",Arial,sans-serif}
   .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .build{margin-top:5px;padding:6px 8px;border:1px solid #476b82;border-radius:5px;background:#142333;color:#dceaf5;font-size:11px;line-height:1.45}
+  .build strong{color:#a4d007;font-size:12px}
+  .build .base{display:block;color:#9fb3c5;font-size:10px}
   h1{margin:0;font-size:15px;color:#fff} h2{margin:12px 0 4px;font-size:12px;color:#66c0f4;text-transform:uppercase;letter-spacing:.04em}
   code{background:#0e1620;padding:1px 4px;border-radius:3px;color:#fff;word-break:break-all}
   ul{margin:0;padding-left:16px} li{margin:3px 0;word-break:break-all}
@@ -25,6 +28,7 @@
 </style></head>
 <body>
   <div class="top"><h1>Site Works</h1><label class="switch" title="Turn Site Works on or off everywhere"><span id="onLbl">On</span><input type="checkbox" id="on"></label></div>
+  <div class="build" id="buildIdentity"><strong>Site Works 1.6.8 · R2 Hotfix 18</strong><span class="base">Built on Site Works 1.6.7 · R2 Hotfix 17</span></div>
   <div id="url" class="dim"></div>
   <div class="site"><span id="site"></span><button id="pause" class="hide">Pause on this site</button></div>
   <div id="banner" class="banner hide"></div>
@@ -37,6 +41,7 @@
     <button id="clip">Copy files to clipboard</button>
     <button id="forgetSite">Forget this site's decisions</button>
     <button id="manage">Manage &amp; log</button>
+    <button id="releaseNotes" style="grid-column:1/-1">📜 Release notes &amp; version history</button>
   </div>
   <div id="msg" class="dim"></div>
   <details><summary>All scripts</summary><ul id="all"></ul><p class="dim" id="built"></p></details>

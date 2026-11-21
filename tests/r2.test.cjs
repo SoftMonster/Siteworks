@@ -39,3 +39,10 @@ test('inventory script includes searchable and freshness-filtered list controls'
   assert.match(s,/class="search"/); assert.match(s,/class="freshness"/);
   assert.match(s,/siteworksInventorySnapshot/); assert.match(s,/data\.history/);
 });
+
+test('inventory list labels current-page data as incomplete until a full scan is saved', () => {
+  const s = fs.readFileSync(path.join(root,'sites/Steamworks/inventory/steam-inventory-prices.js'),'utf8');
+  assert.match(s,/CURRENT WEBdata ONLY/);
+  assert.match(s,/COMPLETE INVENTORY/);
+  assert.match(s,/saved && saved.holdings/);
+});

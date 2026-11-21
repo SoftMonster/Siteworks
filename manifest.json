@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Site Works",
-  "version": "1.5.0",
+  "version": "1.6.9",
   "description": "Runs your own scripts on websites, picked by folder, only after you allow each one. Includes a script editor, file helper, clipboard tool and cross-site toolbox.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwm4vkWrEoHvrG7Xqp33S5ifUIpnvG8tC+U19uSLbClHoVX74BcUX6qkTjeD0qe/j6RJ51x3Z47AY5GjQtrdv7qF/VYd1NzbcTbqxriUheIL7X9xhM7SS1OvOm4OhDj10mGyhLdsvBor+Wf3vvWUL0uGSFOGvM0mfBs5jgsNhf7Muq/rUnCzSEFQhmUwPaHEiQ2y1ob/ErDYbSCLDYyPDHcUHqcSuVy7soWAw35hIqk/asg1BKTqO21kjceMkLeVVKYb2yd7tdiuUj1w8LGLgsXMApwPAicJPwGypcwpvoh4xEFTQxDhX2rkFbyT4xmDEH/hzfexYJut6XrOSOYYRRQIDAQAB",
   "minimum_chrome_version": "106",

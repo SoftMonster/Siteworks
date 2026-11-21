@@ -55,6 +55,7 @@ chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
   $("newScript").onclick = () => openTab("editor.html?tab=" + tab.id + "&url=" + encodeURIComponent(tab.url));
   $("clip").onclick = () => openTab("clip.html");
   $("manage").onclick = () => openTab("manage.html");
+  $("releaseNotes").onclick = () => openTab("release-notes.html");
   $("rebuild").onclick = async () => {
     msg("Rebuilding…");
     try { const r = await UI.helper("rebuild"); msg("Index rebuilt: " + r.files.length + " script(s). Reload the page to use new ones.", "ok"); render(); }
