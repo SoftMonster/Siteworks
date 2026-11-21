@@ -1,6 +1,8 @@
 # Site Works
 
-**Release 1.4.0 (R1 — Reliability & Configuration)**
+**Release 1.6.9 (R2 Hotfix 19)** — Steam inventory tooling on top of the R1 reliability and configuration base.
+
+> New here? Start with [`docs/README-HANDOVER.md`](docs/README-HANDOVER.md), then [`docs/HANDOVER_RESCUE.md`](docs/HANDOVER_RESCUE.md) for the current state of the project.
 
 A Brave/Chromium extension that runs your own scripts on websites, picked by folder —
 `sites\Steamworks\inventory\*.js` runs on Steam pages whose path contains `inventory` —
@@ -27,7 +29,10 @@ See **README.txt** for install steps, folder rules and details.
 | `helper\` | The PowerShell file helper (native messaging host) and its installer |
 | `build-index.ps1`, `Rebuild index.cmd` | Rebuild `sites\index.json` by hand |
 | `sites\` | Your scripts |
+| `scripts\` | Dev tooling: syntax check, release-notes generator, checksum manifest |
+| `tests\` | Offline test suite (`npm test`) |
+| `docs\` | Handover pack: architecture, operations, quality, roadmap |
 
 ## Development checks
 
-Requires Node.js 18 or later. Run `npm test` for matching, configuration, fee arithmetic and safety-regression tests; run `npm run check` to syntax-check JavaScript files. These checks do not replace a Brave/Chromium smoke test or a Windows PowerShell/native-messaging test.
+Requires Node.js 18 or later. `npm run verify` runs the syntax check, the full test suite (matching, configuration, fee arithmetic, safety regressions, version consistency) and the release checksum check. After changing `RELEASE_NOTES.md` run `npm run release-notes`; after changing any shipped file run `npm run manifest`. These checks do not replace a Brave/Chromium smoke test or a Windows PowerShell/native-messaging test.

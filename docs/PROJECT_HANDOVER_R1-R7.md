@@ -1,5 +1,8 @@
 # Site Works — Project Handover: R1–R7
 
+> **Correction notice (rescue pass, 2026-11-21).** Statements below that the package has no `.git` metadata, no source revision or no reproducible verification were true of the ZIP the pack was written against but are **no longer true**: the project is a git repository (`origin` = `github.com/SoftMonster/Siteworks`), 1.6.9 is committed and tagged `v1.6.9`, and `npm run verify` runs the syntax check, tests and checksum check. See [`HANDOVER_RESCUE.md`](HANDOVER_RESCUE.md). Live Brave/Steam acceptance is still **not** done.
+
+
 **From:** Mike, outgoing project lead  
 **To:** Sandy, incoming project lead  
 **Release baseline:** Site Works 1.6.9 · R2 Hotfix 19  

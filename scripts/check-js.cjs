@@ -9,7 +9,7 @@ function walk(dir) {
     if (entry.isDirectory() && ignored.has(entry.name)) continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) walk(full);
-    else if (entry.isFile() && entry.name.endsWith('.js')) files.push(full);
+    else if (entry.isFile() && (entry.name.endsWith('.js') || entry.name.endsWith('.cjs'))) files.push(full);
   }
 }
 walk(root);

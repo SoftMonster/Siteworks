@@ -5,9 +5,19 @@
 - Manifest version: 1.6.9.
 - Package version: 1.6.9.
 - Release lineage described by handover: 1.6.7 HF17 → 1.6.8 HF18 → 1.6.9 HF19.
-- Package scripts: `npm test`, `npm run check`.
-- No bundler/build command or dependency lockfile is present in the supplied archive.
-- Source-control commit/tag cannot be established from this ZIP.
+- Package scripts: `npm test`, `npm run check`, `npm run verify`, `npm run release-notes`, `npm run manifest`.
+- No bundler or dependencies, so no lockfile is needed.
+- Source of truth: git, tag `v1.6.9`; the previous release is tag `v1.5.0`. Rollback = check out the earlier tag and Reload the extension.
+
+## Cutting a release (repeatable)
+
+1. Bump `version` in `manifest.json` and `package.json`.
+2. Add a `# Site Works X.Y.Z — <label>` section to the end of `RELEASE_NOTES.md`.
+3. Update the build-identity line in `popup.html` and the version in `README.md` / first line of `README.txt` (the consistency test tells you what is stale).
+4. `npm run release-notes && npm run manifest`
+5. `npm run verify` must pass (CI runs it on Node 18/20/22 and rebuilds the index on Windows PowerShell).
+6. Commit, `git tag vX.Y.Z`, `git push --follow-tags`.
+7. Do the live Brave/Steam checks in `quality/R2_ACCEPTANCE_MATRIX.md` and record the evidence.
 
 ## Before changing a release
 

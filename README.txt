@@ -1,5 +1,7 @@
-SITE WORKS 1.3 - your own scripts on websites, picked by folder
+SITE WORKS 1.6.9 - your own scripts on websites, picked by folder
 ================================================================
+(This file was written for 1.3 and extended per release. For the current build
+see RELEASE_NOTES.md; for architecture and operations see docs\README-HANDOVER.md.)
 
 INSTALL (once)
   1. Unzip this folder somewhere it can stay (e.g. Documents\SiteWorks).
@@ -184,11 +186,16 @@ PERMISSIONS AND LIMITS
   could also change the gate. Keep the folder somewhere only you write to.
 
 INCLUDED
-  sites\00-toolbox.js - the toolbox (every website).
   sites\Steamworks\hosts.txt
-  sites\Steamworks\inventory\steam-inventory-prices.js - the Card Shelf prices
-  button (cached prices, sortable list, Refresh) and the green
-  "Quick sell over 14p" button, on any Steam inventory page.
+  sites\Steamworks\inventory\steam-inventory-prices.js - Steam inventory
+  tools (R2): synchronise inventory, saved designs/holdings, "Enrich prices",
+  searchable list, and quick sell, on any Steam inventory page.
+  sites\Steamworks\market\clear-steam-listings.js, \id\ProfileButtons.js,
+  GetSteamGames.js and the steamworks-tweaks*.js scripts.
+  sites\00-toolbox.js.old and sites\Claude.ai\page-cli.js.old are RETIRED
+  (".old" is not indexed). The Alt+Shift+K / right-click "toolbox" entry needs
+  sites\00-toolbox.js, so it only shows a "no toolbox in your index" notice
+  until that file is restored (rename it back and rebuild the index).
 
 
 R1 / VERSION 1.4.0
@@ -202,3 +209,13 @@ The bulk listing removal script no longer intercepts window.confirm or auto-clic
 Site Works-managed scripts receive window.__siteWorksConfig, window.SiteWorksFinance and window.SiteWorksNotify. These are page-side preferences/utilities, not permission credentials.
 
 Validation: npm test (14 tests) and npm run check (21 JavaScript files) pass. Brave UI, live Steam interactions and Windows PowerShell/native messaging still require on-device testing.
+
+
+R2 / VERSIONS 1.5.0 - 1.6.9
+---------------------------
+R2 added the Steam inventory tooling now in sites\Steamworks\inventory\.
+The model: "webdata" is what Steam's page holds in memory; "filedata" is Site
+Works' saved, reconciled copy (IndexedDB journal + a localStorage projection);
+market prices are a separate, optional enrichment from Steam's market endpoint.
+Read docs\WEBDATA_FILEDATA_ARCHITECTURE.md before changing any of it.
+Automated checks (npm run verify) do not replace a live Brave + Steam test.

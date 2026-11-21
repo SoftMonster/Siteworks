@@ -56,4 +56,6 @@ This concentration is a maintainability risk. A future refactor could split the 
 - `README.txt` describes itself as Site Works 1.3 and may not reflect all current controls.
 - `helper/com.siteworks.helper.json` contains an absolute Windows path with a specific user's Documents/GitHub location. Verify installer regeneration and portability on a clean Windows account.
 - `sites/00-toolbox.js.old` and `sites/Claude.ai/page-cli.js.old` are archival/old files, not active `.js` scripts under the normal index scan.
-- The ZIP does not include `.git` metadata or a lockfile. Source-control provenance and dependency pinning cannot be established from this archive alone.
+- The project is a git repository (`origin`: `github.com/SoftMonster/Siteworks`; tags `v1.5.0`, `v1.6.9`). There is no lockfile because there are no dependencies.
+- `scripts/build-release-notes.cjs` generates `release-notes.html` from `RELEASE_NOTES.md`; `scripts/manifest.cjs` writes/verifies `docs/RELEASE_FILE_MANIFEST.sha256`; `tests/consistency.test.cjs` keeps version labels, index and release notes aligned.
+- `helper/com.siteworks.helper.json` is generated per machine by `Install file helper.cmd` and is no longer tracked or shipped.

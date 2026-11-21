@@ -274,8 +274,4 @@ test('Hotfix 16 only requests missing prices during page capture and does not ov
   assert.ok(fn.includes('list = list.filter((r) => !r.c'));
 });
 
-test('Hotfix 16 identifies exact build lineage in the extension popup', () => {
-  const popup = fs.readFileSync(path.join(__dirname, '..', 'popup.html'), 'utf8');
-  assert.ok(popup.includes('Site Works 1.6.8 · R2 Hotfix 18'));
-  assert.ok(popup.includes('Built on Site Works 1.6.7 · R2 Hotfix 17'));
-});
+// Build-identity checks live in tests/consistency.test.cjs (derived from manifest.json, not hard-coded).

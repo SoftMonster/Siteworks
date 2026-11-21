@@ -9,203 +9,374 @@
 header{position:sticky;top:0;background:#172433;border-bottom:1px solid #30465a;padding:16px 22px;z-index:2}
 h1{margin:0;color:#fff;font-size:21px}header p{margin:4px 0 0;color:#9fb3c5;font-size:12px}
 main{max-width:980px;margin:20px auto;padding:0 18px 50px}
-.notice{padding:12px 14px;border:1px solid #55728a;border-radius:7px;background:#142333;margin-bottom:18px}
-.notice strong{color:#a4d007}.notice ul{margin:7px 0 0;padding-left:22px}
 article{background:#202f40;border:1px solid #30465a;border-radius:7px;padding:16px 18px;margin:12px 0}
 h2{margin:0 0 9px;color:#66c0f4;font-size:17px}
 h3{margin:12px 0 4px;color:#fff;font-size:13px}
 ul{margin:5px 0;padding-left:22px}li{margin:4px 0}
-.version{color:#a4d007;font-weight:700}
-small{color:#9fb3c5}
+code{background:#0e1620;border-radius:3px;padding:0 4px}
 </style>
 </head>
 <body>
-<header><h1>📜 Site Works release notes</h1><p>Installed build: 1.6.8 · R2 Hotfix 18 · based on 1.6.7 · R2 Hotfix 17</p></header>
+<header><h1>📜 Site Works release notes</h1><p>Installed build: 1.6.9 · R2 Hotfix 19 · generated from RELEASE_NOTES.md</p></header>
 <main>
 <article>
-<h2>🟢 Site Works 1.6.8 · R2 Hotfix 18</h2>
-<p class="version">Build lineage: 1.6.8 / R2 HF18 ← 1.6.7 / R2 HF17</p>
+<h2>🟢 Site Works 1.6.9 · R2 Hotfix 19</h2>
 <ul>
-<li>🌐 Standardises <strong>webdata</strong> (Steam webpage data) and <strong>filedata</strong> (Site Works saved inventory).</li>
-<li>🔄 Replaces separate current-data and full-scan actions with one <strong>Synchronise inventory</strong> operation.</li>
-<li>🧾 Adds a versioned IndexedDB journal of changed/new serialisable asset and description records, appended as Steam streams batches.</li>
-<li>🧱 Consolidates the saved design catalogue and inventory holdings into one versioned filedata record; existing records migrate automatically.</li>
-<li>🔁 Adds a journal replay function to rebuild filedata after future reconciliation changes.</li>
-<li>💷 Price capture remains a separate enrichment operation; Inventory list is read-only.</li>
-<li>📚 Adds <code>docs/WEBDATA_FILEDATA_ARCHITECTURE.md</code> with assumptions, dependencies, diagnostics and future Steam-update maintenance steps.</li>
-<li>🧪 Automated checks do not substitute for live Brave/Steam acceptance testing.</li>
-</ul></article>
+<li>🧭 Corrects the market-price eligibility filter: numeric Steam app IDs are now recognised correctly. This fixes the false <code>0 eligible designs</code> / <code>0 saved prices</code> display when eligible designs and saved price records already exist.</li>
+<li>💷 Renames the operation to <strong>Enrich prices</strong> and explains that market prices come from Steam's separate market endpoint; they are not present in inventory webdata.</li>
+<li>🧩 Removes the manual <strong>Test Steam recovery</strong> probe. A market-price cooldown remains endpoint-specific; when it expires, a user-started enrichment batch can resume without a separate probe.</li>
+<li>🛡️ Clarifies that a market-price throttle does not block reading, rebuilding or viewing already acquired webdata/filedata.</li>
+<li>🗃️ Projects saved prices and price history into the shared <code>siteworksFiledata_v1</code> record while retaining the legacy price store for backward compatibility and migration.</li>
+<li>📊 Uses consistent terminology for saved prices, missing price data and market-price endpoint status. A missing price is not interpreted as proof that an item is unmarketable or has no listing.</li>
+<li>📚 Updates the webdata/filedata architecture handover with the market-price boundary, shared price projection and future maintenance guidance.</li>
+<li>🏷️ Popup/manifest identity: Site Works 1.6.9 · R2 Hotfix 19, built on 1.6.8 · R2 Hotfix 18.</li>
+<li>🧪 Automated checks are not a substitute for live Brave/Steam acceptance testing. Live verification of price eligibility, legacy price migration and throttle behaviour remains outstanding.</li>
+</ul>
+</article>
 <article>
-<h2>🟢 Site Works 1.6.8 · R2 Hotfix 18</h2>
-<p class="version">Build lineage: 1.6.8 / R2 HF18 ← 1.6.6 / R2 HF16</p>
+<h2>Site Works 1.6.8 · R2 Hotfix 18</h2>
+<ul>
+<li>🏷️ Establishes <strong>webdata</strong> for Steam's in-memory webpage data and <strong>filedata</strong> for Site Works' saved, reconciled inventory. The ambiguous inventory term is removed from user-facing acquisition language.</li>
+<li>🔄 Replaces the two inventory acquisition actions with one <strong>Synchronise inventory</strong> operation. It captures the currently available webdata first, then streams further batches through Steam's native loader where supported.</li>
+<li>🧾 Adds an append-only, versioned IndexedDB webdata journal. It records changed/new serialisable asset and description fields per observed batch, without attempting to serialise Steam's live controller object.</li>
+<li>🧱 Consolidates saved designs and inventory holdings into one versioned <code>siteworksFiledata_v1</code> record. Existing design-catalogue and full-inventory records are migrated on first read; saved market prices remain separate enrichment data.</li>
+<li>🔁 Adds <code>S.rebuildFiledataFromWebdataJournal()</code> to rebuild the application-facing filedata projection from the captured webdata journal.</li>
+<li>🧭 Price capture reads the shared design set and performs market-price requests only. Inventory list is a read-only view; neither tab starts inventory acquisition.</li>
+<li>📚 Replaces the previous Steam cache handover with <code>docs/WEBDATA_FILEDATA_ARCHITECTURE.md</code>, including the observed Steam dependencies, completeness rules, storage design, recovery approach and future website-update maintenance procedure.</li>
+<li>🧪 Automated checks do not replace live Brave/Steam validation. IndexedDB persistence, full native streaming, stop/recovery and price-tab integration require live acceptance testing.</li>
+<li>🏷️ Popup identity: Site Works 1.6.8 · R2 Hotfix 18, built on 1.6.7 · R2 Hotfix 17.</li>
+</ul>
+</article>
+<article>
+<h2>Site Works 1.6.7 · R2 Hotfix 17</h2>
 <ul>
 <li>🧠 Makes Steam's cumulative in-memory inventory cache the preferred source for inventory discovery and holdings.</li>
-<li>🔄 Uses Steam's native <code>LoadMoreAssets()</code> loader when runtime feature detection confirms the required capabilities; Steam controls its own request size, continuation and delay.</li>
-<li>📦 Adds <strong>Load cached inventory data</strong>, which reads already-loaded cache data without starting inventory requests or navigating.</li>
-<li>🧮 Distinguishes asset entries, unique designs, reusable descriptions and aggregated item quantities, including stack amounts.</li>
-<li>🧭 Requires Steam's own completion flag and final description validation before saving a complete inventory snapshot.</li>
-<li>🛑 Stop preserves partial cache data and does not cancel or interfere with a Steam request already in progress.</li>
-<li>🧩 Uses runtime capability detection rather than a hard-coded Steam version; the previous verified DOM scanner remains a fallback.</li>
-<li>📚 Adds the Steam inventory cache integration handover and future website-update maintenance guide in <code>docs/STEAM_INVENTORY_CACHE_INTEGRATION.md</code>.</li>
-<li>🧪 Automated validation is not live Brave/Steam acceptance testing. The native-cache scan still requires controlled live testing.</li>
-</ul>
-</article>
-
-<article>
-<h2>🟢 Site Works 1.6.6 · R2 Hotfix 16</h2>
-<p class="version">Build lineage: 1.6.6 / R2 HF16 ← 1.6.5 / R2 HF15</p>
-<ul>
-<li>🔄 Merges design discovery and inventory scanning into one combined all-pages workflow.</li>
-<li>📄 Adds <strong>Load current page data</strong>, which reads the already-rendered Steam page without navigating.</li>
-<li>📦 Both workflows save newly observed designs and item quantities, then attempt missing eligible market-price lookups.</li>
-<li>🧭 Replaces the separate discovery and inventory test buttons with two clear actions: current page or all pages.</li>
-<li>🛑 Stop interrupts the active price queue and prevents further page navigation while preserving committed work and the resume cursor.</li>
-<li>🧱 Design capture and price capture retain independent failure/cooldown states; a price block does not discard verified design data.</li>
-<li>🧪 Current-page loading after an inventory cooldown acts as a manual non-navigation validation step.</li>
-</ul>
-</article>
-
-<article>
-<h2>🟢 Site Works 1.6.5 · R2 Hotfix 15</h2>
-<p class="version">Build lineage: 1.6.5 / R2 HF15 ← 1.6.4 / R2 HF14</p>
-<ul>
-<li>🧭 Reworked the header into a title/action row with navigation tabs below.</li>
-<li>🔘 Import, reload and close controls no longer overlap the tabs.</li>
-<li>📚 Resets the persisted price-age filter to All price ages so cached designs are visible after upgrade.</li>
-<li>📊 Header reports total designs, cached-price designs and designs without prices.</li>
-<li>💷 Price controls remain grouped with their progress and statistics; the inventory table keeps its dedicated scroll area.</li>
-<li>🏷️ Exact popup identity: Site Works 1.6.5 · R2 Hotfix 15, built on 1.6.4 · R2 Hotfix 14.</li>
-</ul>
-</article>
-
-<article>
-<h2>🟢 Site Works 1.6.4 · R2 Hotfix 14</h2>
-<p class="version">Build lineage: 1.6.4 / R2 HF14 ← 1.6.3 / R2 HF13</p>
-<ul>
-<li>🗂️ Split the Card Shelf into Design capture, Price capture and Inventory list tabs.</li>
-<li>🔎 Design capture contains inventory discovery, scan progress, stop/resume, export and activity log.</li>
-<li>💷 Price capture contains price statistics, request controls, batch progress and recovery testing.</li>
-<li>📦 Inventory list receives a dedicated scrollable table, search and price-age filters.</li>
-<li>📊 Added a summary distinguishing unique designs, known individual item counts and unknown quantities.</li>
-<li>🏷️ Updated the extension popup with the exact build version and Hotfix 13 lineage.</li>
-<li>🧪 Live Steam/browser acceptance testing remains necessary.</li>
-</ul>
-</article>
-<section class="notice">
-<strong>🧭 Release-log maintenance rules</strong>
-<ul>
-<li>🟢 Keep every release entry as an emoji-led list. Each bullet starts with a relevant emoji.</li>
-<li>🧱 Keep the log cumulative: add new entries; do not silently remove earlier release history.</li>
-<li>🔢 State the exact extension version, release phase and hotfix number in every release heading.</li>
-<li>🛠️ Separate changes, fixes, limitations and validation. Never claim live Steam testing unless it was actually performed.</li>
-<li>🧪 Record test counts and syntax checks accurately; distinguish automated validation from real-browser testing.</li>
-<li>🧩 Explain which previous release the new build is based on.</li>
-</ul>
-</section>
-<article>
-<h2>🟢 Site Works 1.6.3 · R2 Hotfix 13</h2>
-<p class="version">Build lineage: 1.6.3 / R2 HF13 ← 1.6.2 / R2 HF12</p>
-<h3>🛠️ Visible design list</h3>
-<ul>
-<li>📋 Allocates a real, scrollable area to the design/item/price table so the rows remain visible beneath the two control panels.</li>
-<li>📚 Shows one row per unique design, with the number of individual owned items where known; unknown quantities remain an em dash.</li>
-<li>💷 Allows saved discovered designs to enter price lookup using Steam Community app ID 753 when older catalogue records lack marketability metadata. Steam's price response determines whether a listed price exists.</li>
-<li>📊 Renames ambiguous “cards” labels to “designs” or “items” throughout the user-facing Card Shelf panel.</li>
-<li>🔢 Updates the exact popup build label and cumulative release log.</li>
-</ul>
-<h3>🧪 Validation</h3>
-<ul><li>🧪 Automated and syntax validation results are recorded in the release response; live Steam requests still require user testing.</li></ul>
-</article>
-<article>
-<h2>🟢 Site Works 1.6.2 · R2 Hotfix 12</h2>
-<p class="version">Build lineage: 1.6.2 / R2 HF12 ← 1.6.1 / R2 HF11</p>
-<h3>✨ Version visibility</h3>
-<ul>
-<li>🏷️ Adds the exact installed version and R2 hotfix number to the Site Works extension popup.</li>
-<li>🔗 Explicitly identifies Hotfix 11 (1.6.1) as the base for Hotfix 12 (1.6.2).</li>
-<li>📜 Adds a Release notes &amp; version history button to open this cumulative log.</li>
-</ul>
-<h3>🧭 Release-log policy</h3>
-<ul>
-<li>📝 Future entries must remain emoji-led lists, cumulative and version-specific.</li>
-<li>🔍 Validation claims must distinguish automated tests from live browser and Steam testing.</li>
-</ul>
-<h3>🧪 Validation</h3>
-<ul>
-<li>📦 Package integrity and source syntax checks are run for this build.</li>
-<li>⚠️ Live Brave popup rendering and native helper compatibility still require user verification.</li>
+<li>🔄 Uses Steam's own <code>LoadMoreAssets()</code> method when the active inventory exposes the expected runtime capabilities; Steam remains responsible for request size, continuation, delay, response merging and native error handling.</li>
+<li>📦 Adds a cache-only <strong>Load cached inventory data</strong> action that reads the already-loaded cache without initiating requests or navigating pages.</li>
+<li>🧮 Separates asset entries, unique designs, description records and aggregated item quantities; stack amounts are included in holdings.</li>
+<li>🧭 Uses Steam's <code>m_bFullyLoaded</code> flag plus final description validation before publishing a complete inventory snapshot. Partial results remain explicitly incomplete.</li>
+<li>🛑 Stop does not attempt to cancel Steam's private request; it waits for the current operation to settle, then prevents another batch and preserves partial data.</li>
+<li>🧩 Detects required capabilities at runtime rather than relying on a Steam version string. Retains the verified DOM-page scanner as a compatibility fallback when the native loader surface is unavailable.</li>
+<li>🛡️ Keeps inventory loading and market-price throttling independent; inventory errors stop the scan without automatic retries.</li>
+<li>📚 Adds <code>docs/STEAM_INVENTORY_CACHE_INTEGRATION.md</code>, documenting the investigation, observed Steam source behaviour, cache semantics, assumptions, dependencies, diagnostics and a future website-update maintenance procedure.</li>
+<li>🏷️ Popup identity: Site Works 1.6.7 · R2 Hotfix 17, built on 1.6.6 · R2 Hotfix 16.</li>
+<li>🧪 Automated tests and syntax checks are recorded separately from live Steam/Brave acceptance testing. Native-cache scanning still requires controlled live validation.</li>
 </ul>
 </article>
 <article>
-<h2>🟢 Site Works 1.6.1 · R2 Hotfix 11</h2>
+<h2>Site Works 1.6.6 · R2 Hotfix 16</h2>
 <ul>
-<li>🛠️ Fixed the price button event-binding collision: inventory scan and price refresh previously shared the generic <code>.go</code> selector.</li>
-<li>🏷️ Renamed the price action to <strong>Get prices</strong> and assigned a dedicated <code>.pricego</code> selector.</li>
-<li>🎨 Split the panel into Design Catalogue &amp; Inventory Discovery and Market Prices &amp; Price Refresh sections.</li>
-<li>📊 Added priceable-design, cached-price and missing-price statistics plus live batch progress.</li>
-<li>🧪 Automated validation: 69 tests passed; 22 JavaScript files passed syntax checks. No live Steam test was performed.</li>
+<li>🔄 Merged inventory-wide design discovery and holdings scanning into one combined scan workflow.</li>
+<li>📄 Added <strong>Load current page data</strong>: reads the already-rendered Steam page without clicking Previous/Next.</li>
+<li>💷 Both current-page loading and the combined all-pages scan save newly observed designs and item quantities, then attempt eligible market-price lookups for those page designs.</li>
+<li>🧭 Removed the redundant <strong>Look for new designs</strong> and <strong>Test inventory loading</strong> actions; the remaining all-pages scan is explicitly labelled <strong>Scan all pages (designs + prices)</strong>.</li>
+<li>🛑 Stop interrupts the current price queue and prevents further page navigation; committed page data and the discovery resume position are preserved.</li>
+<li>🧱 Design capture and price capture retain independent cooldown/error handling. A price block does not erase committed design discoveries; an inventory-page validation failure is not interpreted as zero new designs.</li>
+<li>🏷️ Popup identity: Site Works 1.6.6 · R2 Hotfix 16, built on 1.6.5 · R2 Hotfix 15.</li>
+<li>🧪 Automated checks are not a substitute for live Steam/Brave testing.</li>
 </ul>
 </article>
 <article>
-<h2>🟢 Site Works 1.6.0 · R2 Hotfix 10</h2>
+<h2>Site Works 1.6.5 · R2 Hotfix 15</h2>
 <ul>
-<li>📚 Combined saved design catalogue, inventory holdings and price-cache names in the Card Shelf list.</li>
-<li>🔢 Displayed unknown ownership quantities as an em dash rather than inventing a count.</li>
-<li>💷 Kept valuation and inventory snapshots based on actual holdings rather than catalogue-only designs.</li>
-<li>🧪 Live Steam price-refresh integration required manual verification.</li>
+<li>🧭 Reworked the Card Shelf header into a dedicated title/action row, with the three navigation tabs on a separate line below it.</li>
+<li>🔘 Moved import, reload and close controls into a stable action group so they no longer overlap or obscure the tabs.</li>
+<li>📚 Reset the saved price-age filter to <strong>All price ages</strong> on upgrade. This corrects the HF14 situation where a persisted <strong>No price</strong> filter hid all 529 cached designs from the visible list.</li>
+<li>📊 The header count now reports total listed designs, designs with cached prices and designs without prices.</li>
+<li>💷 Price controls remain grouped above price-related progress/statistics; the inventory list retains its own full-height scroll area.</li>
+<li>🏷️ Popup build identity: Site Works 1.6.5 · R2 Hotfix 15, built on 1.6.4 · R2 Hotfix 14.</li>
+<li>🧪 Automated checks do not replace live Steam/Brave acceptance testing.</li>
 </ul>
 </article>
 <article>
-<h2>🟢 Site Works 1.5.9 · R2 Hotfix 9</h2>
+<h2>Site Works 1.6.4 · R2 Hotfix 14</h2>
 <ul>
-<li>🛑 Made inventory discovery waits interruptible by Stop.</li>
-<li>📍 Preserved verified page boundaries and resumable discovery position.</li>
-<li>🎨 Added clearer discovery sections, numeric minimum progress and session summary.</li>
-<li>🧪 Live Steam loading behaviour remained to be verified.</li>
+<li>🗂️ Splits the Card Shelf into three dedicated tabs: Design capture, Price capture and Inventory list.</li>
+<li>🔎 Keeps inventory-page discovery, stable loading checks, scan progress, stop/resume, export and activity log in Design capture.</li>
+<li>💷 Keeps price-cache statistics, request scope, batch limit, delay, Get prices, price progress and recovery controls in Price capture.</li>
+<li>📦 Gives the inventory design/item table its own full-height scrollable tab, with design search and price-age filtering.</li>
+<li>📊 Adds an inventory summary distinguishing unique designs, known individual item counts and designs whose quantities remain unknown.</li>
+<li>🏷️ Updates the popup build identity to Site Works 1.6.4 · R2 Hotfix 14, explicitly built on 1.6.3 · R2 Hotfix 13.</li>
+<li>🧪 Automated tests and syntax checks are recorded separately from live Steam/browser acceptance testing.</li>
 </ul>
 </article>
 <article>
-<h2>🟢 Site Works 1.5.8 · R2 Hotfix 8</h2>
+<h2>Site Works 1.6.3 · R2 Hotfix 13</h2>
 <ul>
-<li>🔎 Consolidated asynchronous inventory-description validation and resumable design discovery.</li>
-<li>🧊 Kept inventory-description and market-price cooldowns independent.</li>
-<li>💾 Preserved partial results and existing price cache.</li>
+<li>📋 Gives the design/item/price table a dedicated scrollable area so the rows remain visible below the catalogue and price controls.</li>
+<li>📚 Displays one row per unique design and distinguishes design count from individual item quantity; unknown quantities remain unknown.</li>
+<li>💷 Allows discovered catalogue designs to be price-lookup candidates using Steam Community app ID 753 when older catalogue records lack marketability metadata. Steam's read-only price response determines whether a listing exists.</li>
+<li>📊 Replaces ambiguous user-facing “cards” wording with “designs” for unique market_hash_name entries and “items” for individual inventory instances.</li>
+<li>🏷️ Updates the popup build identity to 1.6.3 / R2 Hotfix 13, based on 1.6.2 / R2 Hotfix 12.</li>
 </ul>
 </article>
 <article>
-<h2>🟢 Site Works 1.5.3 · R2 Hotfix 4</h2>
+<h2>Site Works 1.6.2 · R2 Hotfix 12</h2>
 <ul>
-<li>🧊 Added independent inventory-description cooldown and manual recovery probe.</li>
-<li>💾 Preserved partial scan results without presenting them as a complete inventory.</li>
+<li>🏷️ Displays the exact installed extension version and R2 hotfix number in the Site Works popup.</li>
+<li>🔗 Identifies the build lineage explicitly: 1.6.2 / R2 Hotfix 12 is built on 1.6.1 / R2 Hotfix 11.</li>
+<li>📜 Adds a popup button that opens the cumulative release-note log.</li>
+<li>🧭 Establishes release-log maintenance rules: keep entries cumulative, use emoji-led lists, state exact versions and hotfix numbers, and distinguish automated validation from live Steam/browser testing.</li>
+<li>🧪 Validation is recorded separately from live testing; no live Steam operation is claimed for this build.</li>
 </ul>
 </article>
 <article>
-<h2>🟢 Site Works 1.5.2 · R2 Hotfix 3</h2>
+<h2>Site Works 1.5.7 · R2 Hotfix 8: Verified asynchronous inventory-page discovery</h2>
+<h3>Scope</h3>
+<p>Hotfix 8 replaces the unreliable page-inspection logic introduced in Hotfix 6 and carried into Hotfix 7. Hotfix 6 and Hotfix 7 should not be used as the testing baseline; install this package instead.</p>
+<h3>Changes</h3>
 <ul>
-<li>🚦 Added persistent market-price throttle state and manual single-request recovery testing.</li>
-<li>🚫 Prevented automatic retries after blocked or inconclusive Steam responses.</li>
+<li>Replaces the fixed-delay/first-tile-change assumption with a page snapshot process based on the currently visible Steam inventory tiles.</li>
+<li>Waits until every rendered tile has a usable <code>market_hash_name</code> description and the complete page snapshot remains unchanged across multiple observations for at least 1.5 seconds (with a 30-second validation timeout).</li>
+<li>Does not record a zero-new-design result, increment completed-item progress, or update the design catalogue when a page is incomplete or unstable.</li>
+<li>Builds the page's unique design set from the verified page snapshot, rather than reading the entire <code>g_ActiveInventory.m_rgAssets</code> collection as if it represented the current page.</li>
+<li>Counts processed inventory instances by unique <code>appid:contextid:assetid</code> keys, preventing duplicate observations from inflating progress across resumable runs.</li>
+<li>Persists verified discoveries and the processed asset-ID set only after a page passes validation; a failed page remains the next resume position.</li>
+<li>Preserves the minimum expected inventory denominator <code>25 × total pages − 24</code>, labelled <code>(min)</code>.</li>
+<li>Updates the manual <strong>Test inventory loading</strong> probe to use the same stable-page validation instead of merely checking whether any descriptions exist globally.</li>
+<li>Retains the 4-second minimum navigation interval, independent inventory/market-price cooldown state, catalogue export, activity log, tooltips and other Hotfix 7 interface additions.</li>
+</ul>
+<h3>Safety and interpretation</h3>
+<ul>
+<li>A page timeout or incomplete description set is reported as <strong>INCOMPLETE</strong>, never as zero new designs.</li>
+<li>Stable DOM content is a client-side completion heuristic; it cannot prove Steam has finished all server-side work or reveal Valve's internal throttling state.</li>
+<li>The 30-second timeout is a stop condition, not an automatic retry. The current page remains resumable and no market-price requests are made.</li>
+<li>The <code>(min)</code> figure is an expected lower bound, not a confirmed total. The final page can contain up to 25 items.</li>
+</ul>
+<h3>Validation</h3>
+<ul>
+<li>Automated tests: 55 passed, 0 failed.</li>
+<li>JavaScript syntax checks: 22 files passed.</li>
+<li>ZIP integrity checked.</li>
+<li>Live Brave/Steam traversal has not yet been tested. This release is intended for controlled validation of the asynchronous loading correction; automated tests do not substitute for that live test.</li>
+</ul>
+<p>\n\n### R2 Hotfix 8 stop/resume correction\n- Stop is honoured at a verified page boundary. If that page was committed, resume starts on the following page; if navigation had begun but the page was not committed, resume remains on that page.\n- Stop summary reports the number of verified pages, designs saved in this run, and the exact resume page.\n</p>
+<h3>1.5.8 — R2 Hotfix 8 final refinement</h3>
+<ul>
+<li>Keeps the explicit design-discovery catalogue separate from names known only through the price cache or a full inventory scan.</li>
+<li>Adds separate Card Shelf reporting for saved design catalogue, cached price entries, and the currently displayed inventory scope.</li>
+<li>Labels estimated value as current-page or full-inventory value according to the actual saved inventory coverage.</li>
+<li>Clarifies that design counts and item-instance counts refer to different things.</li>
+<li>Persists the last discovery run's verified page count, new designs, processed unique items and resume page.</li>
+<li>Retains the asynchronous stable-page validation, incomplete-page handling, independent cooldowns, progress, export, activity log and safe Stop/resume behaviour.</li>
+</ul>
+<h3>1.5.9 — R2 Hotfix 9</h3>
+<ul>
+<li>Makes discovery Stop interruptible during page-change waits, inventory-stability polling and inter-page delays.</li>
+<li>Prevents new page navigation after Stop is requested; preserves the verified page boundary or pending destination as the resume cursor.</li>
+<li>Adds explicit collection/price, inventory discovery, and price-refresh section labels.</li>
+<li>Adds numerical processed/minimum progress text and a persistent last-session summary.</li>
+<li>Retains Hotfix 8's stable snapshot validation, separate catalogue/cache/inventory accounting, exports, activity log, cooldowns and price-history protections.</li>
+</ul>
+<h3>1.6.0 — R2 Hotfix 10</h3>
+<ul>
+<li>Builds the Card Shelf priceable-design list from the union of the saved discovery catalogue, current/complete inventory holdings and cached price entries.</li>
+<li>Discovered designs with known appid and marketable metadata can be selected for market-price refresh even when not on the currently visible Steam page.</li>
+<li>Shows unknown quantity as an em dash rather than zero or an invented count.</li>
+<li>Keeps inventory snapshots and valuation based only on actual holdings, never the expanded catalogue list.</li>
+<li>Labels discovered-only and price-cache-only entries separately; selecting a catalogue-only row does not attempt to open a nonexistent inventory asset.</li>
+<li>Preserves Hotfix 9's responsive discovery Stop, stable-page validation, resumable cursor, separate cooldowns and redesigned panel.</li>
+</ul>
+<h3>1.6.1 — R2 Hotfix 11</h3>
+<ul>
+<li>Fixes price-refresh click handling: the inventory scan and price action previously shared the generic <code>.go</code> selector, causing the first matching control (Scan all inventory pages) to receive the price handler while the price button received none.</li>
+<li>Renames the price action to <strong>Get prices</strong> and gives it a dedicated <code>.pricego</code> selector.</li>
+<li>Separates the UI into a Design Catalogue &amp; Inventory Discovery panel and a Market Prices &amp; Price Refresh panel.</li>
+<li>Moves price-cache statistics, priceable/missing counts, progress and recovery controls into the market-prices panel.</li>
+<li>Adds live price-batch progress and a Stop state on the Get prices button.</li>
 </ul>
 </article>
 <article>
-<h2>🟢 Site Works 1.5.1 · R2 Hotfix 1</h2>
+<h2>Site Works 1.5.5 · R2 Hotfix 6: Inventory-completeness-aware design discovery</h2>
+<h3>Changes</h3>
 <ul>
-<li>📚 Added traversal of Steam inventory pages and full-scan versus partial-scan distinction.</li>
-<li>⏱️ Enforced a minimum four-second interval between inventory page navigations.</li>
+<li>Adds a conservative completeness threshold for new-design discovery: <code>25 × total pages − 24</code>, allowing the final inventory page to contain as few as one item.</li>
+<li>Recognises Steam pagination labels expressed as an item range (for example, <code>1 - 25 of 17,300</code>) or a page count (for example, <code>Page 1 of 693</code>).</li>
+<li>A page with zero new designs no longer stops discovery while the estimated inventory-completeness threshold remains unmet; discovery continues through subsequent pages.</li>
+<li>Once the threshold is reached, a zero-new-design page may pause discovery and save the next-page cursor. The final-page control remains an independent completion signal.</li>
+<li>Shows a ⚠️ warning and progress count when a page contains no new designs but inventory completeness has not yet been established.</li>
+<li>Keeps immediate catalogue persistence, manual resume, the 4-second navigation delay, and independent inventory/price cooldowns.</li>
+</ul>
+<h3>Limitations</h3>
+<ul>
+<li>The threshold assumes 25 items on each preceding page and at least one item on the final page. It is an inventory-position estimate, not a guarantee that Steam has returned every description.</li>
+<li>If Steam's pagination label cannot be parsed, discovery will not use the threshold to stop early; it will continue until the final page or another failure condition.</li>
+<li>Live Brave/Steam traversal has not been verified; automated tests validate the implemented logic only.</li>
+</ul>
+<h3>1.5.6 — R2 Hotfix 7</h3>
+<ul>
+<li>Improved Card Shelf panel control guidance with tooltips for inventory, discovery, refresh, delay, batch size, and recovery actions.</li>
+<li>Added a discovery progress bar against the minimum expected inventory size, with the denominator explicitly labelled <code>(min)</code> in progress text.</li>
+<li>Progress counts loaded inventory assets rather than quantities aggregated by card design.</li>
+<li>Added a persistent, bounded activity log for design discoveries, pauses, exports, and resets.</li>
+<li>Added JSON export of the local known-design catalogue, excluding market-price history.</li>
+<li>Added a confirmed reset of the discovery cursor; it preserves the design catalogue, inventory snapshots, and price cache.</li>
+<li>Kept inventory discovery, full inventory scanning, and market-price caching as separate operations.</li>
+<li>Existing stop behaviour preserves discoveries and the resume position; clicking discovery again resumes from the saved page.</li>
 </ul>
 </article>
 <article>
-<h2>🟢 Site Works 1.5.0 · R2 Inventory Intelligence</h2>
+<h2>Site Works 1.5.4 · R2 Hotfix 5: Resumable new-design discovery</h2>
+<h3>Scope</h3>
 <ul>
-<li>💷 Added inventory valuation, price freshness, historical observations and buy-order spread.</li>
-<li>📸 Added inventory snapshot comparison and search/filter controls.</li>
+<li>Adds a dedicated <strong>Look for new designs</strong> operation, separate from full inventory valuation and Community Market price refresh.</li>
+</ul>
+<h3>Changes</h3>
+<ul>
+<li>Traverses Steam inventory pages using the existing page controls and a minimum 4-second wait between successful page navigations.</li>
+<li>Compares each page response against a persistent local design catalogue, the existing price cache and any saved complete inventory scan.</li>
+<li>Saves each newly discovered design immediately, preserving prior discoveries if the scan is stopped or interrupted.</li>
+<li>Pauses on the first page response containing zero designs not already in the catalogue. The next-page cursor is persisted; clicking <strong>Look for new designs</strong> again resumes at the following page.</li>
+<li>At the final page, marks the traversal complete and resets the next manual discovery run to page one.</li>
+<li>Reuses the independent inventory-description cooldown and never initiates market-price requests.</li>
+</ul>
+<h3>Limitations</h3>
+<ul>
+<li>Discovery uses Steam's currently rendered inventory page and DOM controls; live Brave/Steam testing remains necessary.</li>
+<li>A zero-new-design page is treated as the requested stopping boundary. If a later page contains unseen designs beyond that boundary, click the button again to continue.</li>
+<li>The 4-second wait is a conservative client-side delay, not a guarantee against Steam throttling.</li>
 </ul>
 </article>
 <article>
-<h2>🟢 Site Works 1.4.0 · R1 Reliability &amp; Configuration</h2>
+<h2>Site Works 1.5.3 · R2 Hotfix 4: Independent inventory-description throttling</h2>
+<h3>Scope</h3>
 <ul>
-<li>🧱 Added shared configuration, notifications and finance utilities.</li>
-<li>🛡️ Added quick-sell safeguards, per-run caps, request intervals and safer bulk-removal confirmation.</li>
+<li>Adds a persistent inventory/card-description loading state machine, separate from the existing Community Market price-refresh throttle.</li>
+<li>Treats missing descriptions, empty loaded pages and stalled page transitions as incomplete inventory acquisition, not as evidence that cards do not exist.</li>
 </ul>
+<h3>Changes</h3>
+<ul>
+<li>Persists inventory loading cooldown and incident count independently from price cooldown.</li>
+<li>Uses a bounded escalating local cooldown (1, 2, 4, 8, 16, then 24 hours); this is a conservative client-side pause, not a claim about Valve's reset schedule.</li>
+<li>Stops the inventory scan when a page fails to change or arrives without usable card descriptions.</li>
+<li>Preserves partial scan results on both user stop and load failure; partial results are never published as complete inventory.</li>
+<li>Adds a manual <strong>Test inventory loading</strong> control. After cooldown expiry, it performs one page navigation and checks whether card descriptions load. It does not automatically resume a full scan.</li>
+<li>A successful inventory probe only permits the user to manually start a new scan. Market price cooldown and cache remain independent and unchanged.</li>
+</ul>
+<h3>Limitations</h3>
+<ul>
+<li>Steam does not expose a documented endpoint reporting inventory-description throttle status. This hotfix detects symptoms in the visible inventory page; it cannot identify Valve's internal cause.</li>
+<li>The scanner still uses Steam's current page controls and DOM. Live Brave/Steam validation is required.</li>
+<li>A successful one-page probe does not guarantee that a full 693-page scan will complete.</li>
+</ul>
+<h3>Validation</h3>
+<ul>
+<li>Automated tests cover independent throttle state, cooldown persistence, manual recovery probe, partial-result preservation and scan gating.</li>
+<li>Syntax checks and package integrity are required before release.</li>
+</ul>
+</article>
+<article>
+<h2>Site Works 1.5.2 · R2 Hotfix 3: Persistent throttling and manual recovery</h2>
+<h3>Scope</h3>
+<ul>
+<li>Makes Steam price-refresh throttling persistent across browser restarts.</li>
+<li>Adds manual single-request recovery testing; no automatic retry or bulk refresh follows a successful probe.</li>
+<li>Retains existing cached prices and R2 inventory scan data.</li>
+</ul>
+<h3>Changes</h3>
+<ul>
+<li>Persists throttle state, last HTTP status, timestamps, retry-after information and escalation count in localStorage.</li>
+<li>Migrates the earlier R2.1 <code>{until, blocks}</code> cooldown record without losing an active cooldown.</li>
+<li>Stops the price queue on HTTP 429, access-denial/service-unavailable responses, unexpected HTTP responses, invalid JSON or network errors.</li>
+<li>Reads <code>Retry-After</code> when supplied; otherwise uses a bounded escalating cooldown (1, 2, 4, 8, 16, then 24 hours). These are conservative local fallback intervals, not claims about Valve's actual reset schedule.</li>
+<li>Adds a <strong>Test Steam recovery</strong> control. It sends one request for a marketable inventory item, does not update the cache, and only marks the endpoint responsive when valid Steam price-overview JSON is returned.</li>
+<li>After a successful probe, the user must manually start a small refresh batch. Any renewed block stops it immediately.</li>
+<li>A valid response with <code>success: true</code> but no price is counted as a genuine no-price result; invalid or challenge responses are not.</li>
+</ul>
+<h3>Important limitations</h3>
+<ul>
+<li>Valve does not provide a documented Community Market rate-limit status endpoint. <code>Retry-After</code> may be absent.</li>
+<li>A successful single probe does not guarantee that a larger batch will remain unthrottled. Resume conservatively.</li>
+<li>HTTP 403/502/503/504 are treated as blocking/unavailable responses and stop the queue; other unexpected responses are marked inconclusive and require a manual recovery probe.</li>
+<li>No live Steam request or browser session was executed during release validation.</li>
+</ul>
+<h3>Validation</h3>
+<ul>
+<li>Automated test suite and JavaScript syntax checks run as part of this package build.</li>
+</ul>
+</article>
+<article>
+<h2>Site Works 1.5.0 · R2: Inventory Intelligence</h2>
+<h3>Scope</h3>
+<p>R2 builds on R1 and extends the existing Steam inventory price panel with consolidated valuation, historical price observations, buy-order spread, freshness filters, inventory snapshot comparisons, and text search. The existing inventory cache format remains readable; history is additive.</p>
+<h3>Changes</h3>
+<ul>
+<li>Added <code>inventory-intelligence.js</code> with pure, reusable valuation, freshness, snapshot-diff and same-currency spread functions.</li>
+<li>Injected the shared inventory intelligence module before approved site scripts.</li>
+<li>Inventory panel now shows estimated cached-price value multiplied by held quantities, coverage and unpriced design counts.</li>
+<li>Added persistent search and price-age filters (fresh under 2 days, aging 2–14 days, stale over 14 days, and missing).</li>
+<li>Added up to 90 price observations per card design when refreshed; unchanged observations update their timestamp rather than creating redundant points.</li>
+<li>Added inventory snapshot comparison for additions, removals and quantity changes.</li>
+<li>Buy-order column now displays the spread only when listing and bid currencies match.</li>
+<li>Preserved existing Card Shelf price import/export structure and Steam request cooldown behaviour.</li>
+</ul>
+<h3>Limitations</h3>
+<ul>
+<li>Valuation is an estimate based on cached lowest listings, not guaranteed sale proceeds; it excludes transaction fees and market liquidity.</li>
+<li>Price history begins when R2 observes refreshes; historical prices are not reconstructed.</li>
+<li>Inventory change detection compares snapshots captured when the inventory panel is rendered; it cannot infer whether a change was a sale, trade, purchase or other event.</li>
+<li>Price refresh still depends on Steam's public price overview response and current page/session availability.</li>
+<li>No live Steam transactions or browser UI tests were performed.</li>
+</ul>
+<h3>Validation</h3>
+<ul>
+<li><code>npm test</code> includes R1 regressions and R2 inventory-intelligence tests.</li>
+<li><code>npm run check</code> validates JavaScript syntax across the release.</li>
+</ul>
+<h3>1.5.1 — R2 Hotfix: Complete inventory scan</h3>
+<ul>
+<li>Adds an explicit <strong>Scan all inventory pages</strong> operation to Card Shelf prices.</li>
+<li>Traverses Steam's own Previous/Next inventory controls, aggregates card designs and quantities across pages, and publishes full-inventory totals only after a complete scan.</li>
+<li>Enforces a minimum 4-second wait between inventory page navigations; does not automatically retry failed page transitions.</li>
+<li>Supports stopping the scan. Partial results are labelled separately and are never represented as a complete inventory.</li>
+<li>Keeps the existing price refresh separate from inventory collection.</li>
+<li>Existing cached prices and R1/R2 settings are retained.</li>
+</ul>
+<p><strong>Limitations:</strong> Steam's live page controls and inventory loading must be tested in Brave. The scanner relies on Steam's current DOM selectors (<code>#pagebtn_next</code> and previous-page controls); a Steam interface change may prevent scanning. A full scan of hundreds of pages can take a long time.</p>
+</article>
+<article>
+<h2>Site Works 1.4.0 · R1: Reliability &amp; Configuration</h2>
+<h3>Scope</h3>
+<p>R1 establishes shared configuration and page-side services, standardises notification behaviour, and adds mandatory safeguards to the existing automated Steam listing workflows. It preserves the Manifest V3 extension architecture, folder matching, default-deny/hash-bound permission gate, popup/request/editor/Manage flows, native helper and existing site scripts.</p>
+<h3>New shared infrastructure</h3>
+<ul>
+<li>Added <code>config.js</code>, a versioned configuration schema with validation, bounded numeric values and immutable safety requirements.</li>
+<li>Added central configuration storage and serialized updates in the service worker.</li>
+<li>Added a Shared configuration section to Manage for currency, quick-sell threshold, undercut, per-run listing cap, minimum request interval and notification preferences.</li>
+<li>Added <code>steam-finance.js</code> with reusable integer-minor-unit buyer-total and seller-receives calculations.</li>
+<li>Added <code>siteworks-services.js</code> with accessible, configurable page notifications.</li>
+<li>Site Works injects the normalized user preferences and shared page utilities before running an approved site script.</li>
+</ul>
+<h3>Safety and reliability changes</h3>
+<ul>
+<li>Quick Sell now always requires confirmation.</li>
+<li>Quick Sell is capped at the configured number of successful listings per run (default 20; maximum configurable value 500).</li>
+<li>Quick Sell enforces a minimum 4-second interval between item-price lookups/listing operations.</li>
+<li>HTTP 429 causes the direct quick-sell workflow to stop without an automatic retry.</li>
+<li>The Card Shelf quick-sell workflow uses the shared threshold, per-run cap and request interval.</li>
+<li>Bulk listing removal no longer replaces <code>window.confirm</code> or automatically clicks confirmation buttons. It displays a destructive-action preview and leaves Steam confirmation dialogs under user control.</li>
+<li>Manage-page notifications now use accessible status/alert semantics and consistent severity levels.</li>
+</ul>
+<h3>Compatibility</h3>
+<ul>
+<li>Existing stored permissions, including SHA-256-bound allow decisions, are preserved.</li>
+<li>Existing settings (<code>enabled</code>, <code>paused</code>, <code>perms</code>, <code>log</code>) are preserved; the new <code>config</code> key is additive.</li>
+<li>Scripts run directly in Tampermonkey without Site Works still use safe local defaults, but do not receive Site Works' central configuration/services.</li>
+</ul>
+<h3>Validation performed</h3>
+<ul>
+<li><code>npm test</code>: 14 tests passed (existing matching/permission tests plus configuration, fee arithmetic and safety regression tests).</li>
+<li><code>npm run check</code>: 21 JavaScript files passed Node syntax validation.</li>
+</ul>
+<h3>Validation not performed</h3>
+<ul>
+<li>No live Brave/Chromium browser session was available for UI smoke testing.</li>
+<li>No live Steam market or inventory transactions were performed.</li>
+<li>Windows PowerShell/native messaging installation was not executed in this environment.</li>
+<li>Steam DOM workflows remain dependent on the current Steam page structure and must be smoke-tested manually before real transactions.</li>
+</ul>
+<h3>Upgrade notes</h3>
+<p>Replace the existing unpacked Site Works folder with the contents of this release, then use <code>brave://extensions</code> → Site Works → Reload. Existing permission decisions remain in browser extension storage. The native file helper is versioned from <code>manifest.json</code>; if the helper reports a mismatch, run <code>Install file helper.cmd</code> from the new release folder.</p>
 </article>
 </main>
 </body></html>
