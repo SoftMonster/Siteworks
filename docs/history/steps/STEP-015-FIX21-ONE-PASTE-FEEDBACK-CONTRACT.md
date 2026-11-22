@@ -1,19 +1,31 @@
-# STEP-015 — FIX21 One-Paste Feedback Contract
+# STEP-015 — FIX22 text-first feedback hand-off correction
 
 **Date:** 2026-11-21  
-**Scope:** Documentation and governance only.
+**Baseline:** Site Works 1.6.9 / R2 Hotfix 20 / FIX21  
+**Change type:** Documentation and acceptance-contract correction only
 
-## Change
-Established `docs/operations/FEEDBACK_LOOP_CONTRACT.md` as the specification for the Andrew Next Task feedback loop. Updated the operator guide, root next-task pointer, documentation index, engineering standard, canonical TODO-001 and cumulative progress log.
+## Triggering evidence
 
-## Intended operator experience
-Andrew runs the stable batch file once, pastes the final clipboard screenshot into the next ChatGPT response, and adds any manual requests as ordinary text. The screenshot must display a concise diagnostic capsule; full logs and structured JSON remain in a unique run folder.
+Andrew pasted the clipboard result into ChatGPT and it arrived as a single screenshot image. The image shows the known PowerShell parser failure and exit code 1. It is not the full diagnostic report and does not transfer a locally generated feedback ZIP.
 
-## Evidence requirements
-The contract requires a run/build identity, timestamp, outcome, stage statuses, environment, tool versions, commands and exit codes, first failure, artifact paths and clipboard read-back result. It defines safe fallback behaviour when capture or clipboard transfer fails.
+## Finding
+
+The prior launcher design attempted to place image and text formats on the Windows clipboard and checked that both formats existed locally. This does not guarantee the receiving application will choose the text format. A pasted image cannot carry the full ZIP or local diagnostic files.
+
+## Decision
+
+The normal one-paste hand-off is now plain text only. The clipboard report must be self-contained, include the earliest failure and all relevant run/environment/command metadata, and be verified by reading clipboard text back. Screenshots, transcript, JSON and ZIP remain local artifacts and are attached only when requested.
+
+## Files updated
+
+- `docs/operations/FEEDBACK_LOOP_CONTRACT.md`
+- `docs/operations/ANDREW_NEXT_TASK.md`
+- `docs/PROJECT_TODO.md`
+- `docs/PROJECT_PROGRESS_LOG.md`
+- `docs/README.md`
+- `ANDREW_NEXT_TASK.txt`
+- `RELEASE_NOTES.md`
 
 ## Verification boundary
-This is a documentation specification, not proof of implementation. The supplied launcher is still blocked by the observed PowerShell parser failure. No code changes were made and no Windows runtime claim is made.
 
-## Next action
-Repair the exact generated PowerShell payload, implement the contract in the launcher, and validate it on Andrew's Windows machine through repeated paste-and-response cycles.
+No launcher or application source code was changed. No claim is made that the parser defect is repaired or that the text-first hand-off has been implemented. TODO-001 remains BLOCKED until the exact generated payload parses under Windows PowerShell 5.1 and Andrew completes two consecutive end-to-end text-paste runs.

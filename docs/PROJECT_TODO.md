@@ -1,7 +1,7 @@
 # Site Works — Canonical Project TODO and Acceptance Backlog
 
-**Baseline inspected:** 1.6.9 · R2 Hotfix 20 · TODO consolidation FIX19; documentation framework FIX20  
-**Backlog date:** 2026-11-21 (updated after Windows launcher failure evidence)  
+**Baseline inspected:** 1.6.9 · R2 Hotfix 20 · feedback-loop implementation FIX29  
+**Backlog date:** 2026-11-22 (updated from consecutive FIX27/FIX28 Windows PowerShell 5.1 runs)  
 **Authority:** This is the single prioritised execution backlog. Older roadmap, handover, technical-debt and historical task records remain useful evidence, but this file controls current task ordering.  
 **Product status:** R2 is implemented in substantial part, but is **not accepted as complete**. No R3–R7 implementation is authorised by this backlog.
 
@@ -12,33 +12,47 @@
 - Keep evidence in `docs/evidence/` or the relevant dated `docs/history/` folder. Redact account IDs, personal paths, tokens and private inventory data.
 - Work in dependency order. Do not skip a blocker merely because a later task is easier.
 - Preserve the default-deny/hash-bound permission model, Steam request pacing, stop-on-429 behaviour, user confirmation for consequential actions, `.git`, user data and the stable launcher filename.
-- Every project-changing iteration updates this backlog, `PROJECT_PROGRESS_LOG.md`, the dated history record and the next-task handover. Keep the final Windows screenshot-to-clipboard step in the launcher and verify that the clipboard contains an image; retain text logs if clipboard capture fails.
+- Every project-changing iteration updates this backlog, `PROJECT_PROGRESS_LOG.md`, the dated history record and the next-task handover. The primary hand-off is a verified plain-text clipboard report; screenshots and the feedback ZIP are supporting local artifacts and are not transferred by pasting a clipboard image.
 
 ## P0 — Restore a trustworthy next-task feedback loop
 
-### TODO-001 — Reconcile launcher build identity and verify the Windows launcher
-**Status:** BLOCKED · **Priority:** P0 · **Owner:** Maintainer (repair) + Andrew (machine acceptance)
+### TODO-001 — Repair launcher and establish text-first one-paste diagnostics
+**Status:** DONE · **Priority:** P0 · **Owner:** Maintainer (implementation) + Andrew (Windows acceptance)
 
-**Finding:** Earlier FIX18/FIX19 records identified an archive/launcher build-identity mismatch. New direct Windows evidence from Andrew on 2026-11-21 supersedes the assumption that identity reconciliation alone is the next step: the launcher now demonstrably fails during PowerShell parsing. The screenshot reports `The ampersand (&) character is not allowed` at generated temporary script line 139, character 36, followed by cascading missing-parenthesis/brace and unexpected-token errors; the process exits with code 1. The exact source expression must be traced in the launcher generator/payload. Treat all downstream diagnostics as not executed until parsing succeeds.
+**Finding:** FIX25 Windows run `8e3ed4c2-90da-488a-8cf8-43d844da2d28` (PowerShell 5.1.26100.9818) passed parser preflight and completed deployment. The backup was retained; Robocopy exit codes were 1 and 3 (within the launcher's 0–7 non-fatal range); no transcript/event-log file-lock warnings appeared; clipboard plain-text read-back matched exactly. Its generic `COMMANDS_COMPLETED_REVIEW_REQUIRED` outcome did not establish whether the deployed project's automated checks had run. FIX26 adds a post-deployment `npm run verify` stage and records deployment, backup/deployment Robocopy, and project-verification states and exit codes independently. A successful automated check remains distinct from live Brave, helper and Steam acceptance.
 
 **Actions:**
-1. Establish the one-paste feedback contract in `docs/operations/FEEDBACK_LOOP_CONTRACT.md` as the acceptance specification for all future launcher work. The console screenshot must contain a compact final feedback capsule; full diagnostics must be retained in a unique run folder as `run.txt` and `run.json`. Do not assume ChatGPT paste preserves both image and text clipboard formats.
-2. Trace the reported generated-script line back to the source launcher; inspect the surrounding expression and quoting/escaping. Correct the parser defect, then run a Windows PowerShell 5.1 parser check against the exact generated payload.
-3. Regenerate the launcher from its source-of-truth script, setting one consistent build identity matching the next archive.
-4. Ensure the launcher still detects its own path safely, supports Windows PowerShell 5.1 syntax, creates a timestamped transcript, captures meaningful screenshots and attempts to place the final screenshot on the Windows clipboard.
-5. Preserve existing clipboard content at startup; clear it only when already empty, as specified by the project protocol.
-6. Verify clipboard image presence rather than merely reporting that capture was attempted. Retain the text log and report clipboard failure plainly.
-7. Check embedded payload round-trip, marker uniqueness, ZIP integrity and the stable launcher filename.
-8. Andrew runs the exact repaired launcher from the delivered archive on Windows and returns the log plus clipboard screenshot (or a manual screenshot if clipboard capture fails).
+1. FIX25 Windows run confirms parser preflight, deployment and clipboard read-back; no file-lock warnings were present. FIX26 runs `npm run verify` against the deployed target and records its exact exit code. Re-run the full workflow on Windows PowerShell 5.1.
+2. Reconcile archive, visible launcher, embedded payload and extracted project build IDs.
+3. FIX23 implements **plain-text-only** `feedback-report.txt` delivery.
+4. Include build/run identity, environment, ordered stage results, exact commands, exit codes, first actionable failure, concise output excerpts, redactions and local artifact paths in the clipboard report.
+5. FIX23 copies plain text only and verifies exact read-back equality. Do not use image presence as the success criterion.
+6. Preserve existing clipboard contents until the final report is ready. On copy/verification failure, retain the report locally and state the failure.
+7. Save `run.txt`, `run.json`, `final-screen.png`, relevant screenshots, `manifest.sha256` and `feedback-bundle.zip` in a unique run folder. Clearly distinguish local files from content transferred by clipboard paste.
+8. Keep screenshot evidence local by default. Ask Andrew to attach the feedback ZIP or a named screenshot only when the pasted text report is insufficient.
+9. Test success, parser failure, command failure, missing optional tools and clipboard failure. Dependent stages must be `NOT RUN` or `BLOCKED`, never falsely green.
+10. Update the operator guide and feedback contract to match actual behaviour. Deliver one corrected archive and one exact run instruction. FIX25 regression assertions cover separate transcript/event logs. FIX26 adds regression assertions for post-deployment verification and truthful outcome classification. FIX27 adds opt-in Node.js prerequisite recovery and toolchain evidence.
 
-**Acceptance:** exact generated payload parses under Windows PowerShell 5.1; the feedback capsule contains all required run/build/environment/stage/exit-code/first-error/log-path fields; unique run folder contains `run.txt`, `run.json`, `final-screen.png` and `manifest.sha256`; clipboard image read-back succeeds; Andrew can paste the expected image into ChatGPT; failure fallback is explicit; visible and logged build ID matches the archive; no parser error; diagnostics identify Node/npm/Git accurately; screenshot file/image is verified on clipboard or failure is explicit; transcript and output are retained. No automatic installation: any winget install remains opt-in.
+**Acceptance:** exact generated payload parses under Windows PowerShell 5.1; build identities agree; no transcript/event-log sharing errors occur; both logs and required artifacts are created; clipboard contains only the complete plain-text report and read-back verification matches; a ChatGPT paste arrives as diagnostic text; forced failures are reported accurately; clipboard failure leaves a readable local report; two consecutive Andrew-side runs complete the hand-off; no secrets or unnecessary personal identifiers are exposed. FIX27 and FIX28 now provide two consecutive Andrew-side Windows PowerShell 5.1 runs with successful parser preflight, deployment, deployed `npm run verify` exit 0, exact plain-text clipboard read-back and successful ChatGPT text-paste hand-off. FIX27: 96/96 tests; FIX28: 98/98 tests; both: 40 JavaScript syntax files, 125 manifest entries and governance pass. FIX28 also confirms the corrected no-actionable-error excerpt and explicit live-acceptance-pending outcome. TODO-001 is DONE: the launcher/feedback loop acceptance criteria are met. This does not accept the Site Works product or close TODO-003–007.
 
 ### TODO-002 — Establish the local development prerequisites
-**Status:** BLOCKED pending TODO-001 feedback · **Priority:** P0 · **Owner:** Andrew
+**Status:** IN PROGRESS · **Priority:** P0 · **Owner:** Andrew
 
 **Actions:** Confirm Windows version, PowerShell 5.1 availability, Node.js >=18, npm and Git. If tools are missing, use the installer's explicit opt-in path only after reviewing the prompt. Do not bypass policy or silently install software.
 
 **Acceptance:** launcher log records executable paths and versions; `npm run verify` can execute from the intended working repository; Git working-tree state is recorded without altering it.
+
+### FIX26 Windows evidence and FIX27 next action (2026-11-22)
+- FIX26 run `b14a4df5-d8f9-46d1-8632-ecdc0180b50b`: deployment completed, Robocopy codes 1/3, no obvious transcript errors, clipboard read-back verified. `npm run verify` did not run because Node.js or `npm.cmd` was unavailable.
+- FIX27 refreshes PATH and asks permission before installing Node.js LTS through winget. No software is installed unless Andrew answers Y.
+- **Next action:** run FIX27's `Andrew_next_task.bat`; if prompted, choose Y only if Node.js LTS installation is acceptable. Paste the resulting report. If N, the report should record the declined installation and blocked verification.
+
+## FIX27/FIX28 Windows acceptance evidence and FIX29 next action (2026-11-22)
+- FIX27 run `0e7c21fb-f784-40ad-a3ae-e5d00e8c4a4d`: deployed project verification passed (96/96 tests, 40 JavaScript files, 125 manifest entries, governance pass); clipboard exact-text read-back verified.
+- FIX28 run `08e0cdcd-bb43-4e92-aa02-f719c09548bb`: deployment completed; Robocopy exit codes 1/3 were non-fatal; Node.js v26.13.1/npm 11.20.0 ready; deployed verification exit 0; 98/98 tests, 40 JavaScript files, 125 manifest entries and governance passed; clipboard exact-text read-back verified.
+- FIX28 correctly reported no actionable error and `DEPLOYMENT_AND_PROJECT_VERIFY_PASSED_LIVE_ACCEPTANCE_PENDING`. The two consecutive runs complete TODO-001 launcher/feedback-loop acceptance.
+- The pasted FIX28 transcript renders Node test checkmarks as mojibake (`Ô£ö`/`Ôä╣`) in this copy. Test totals and exit status are intact; this is a transcript text-encoding/presentation issue, not a failed test. Preserve as a minor diagnostic readability observation; do not change runtime behaviour without reproducible evidence.
+- **Next action:** TODO-003 clean-profile Brave/Chromium smoke test. Then TODO-004 native-helper Windows acceptance, TODO-005/006 Steam inventory and price acceptance, and TODO-007 storage failure-injection evidence. Do not reinstall Node.js. Keep R2 release blocked until TODO-008 owner decision.
 
 ## P1 — Complete R2 live acceptance (release blocker)
 
@@ -166,16 +180,18 @@ Define durable job state, scheduling/cancellation consent, bounded requests, bac
 
 Define navigation, dashboard aggregation, accessibility and domain isolation. Dashboard must not silently trigger operations or hide partial/blocked/stale states.
 
-## Current next action
-
-**Maintainer: repair the PowerShell parser failure shown in Andrew's 2026-11-21 screenshot, then validate the exact generated launcher under Windows PowerShell 5.1.** Andrew should not rerun the known-broken launcher. Once a corrected archive is supplied, Andrew runs that exact launcher and returns its transcript and clipboard screenshot (or a manual screenshot if clipboard capture fails). If the local toolchain is missing, record that as a separate blocker; do not manually edit source or manifests.
+## FIX27 Windows evidence and FIX28 next action (2026-11-22)
+- FIX27 run `0e7c21fb-f784-40ad-a3ae-e5d00e8c4a4d` on Windows PowerShell 5.1.26100.9818: deployment completed; Robocopy exit codes 1 and 3; Node.js 26.13.1 and npm 11.20.0 ready; deployed `npm run verify` exit 0; 96/96 tests passed; 40 JavaScript files checked; 125 manifest entries verified; governance passed; clipboard exact-text read-back verified.
+- The report's first “failure/warning” excerpt selected a successful test title containing the word “failed” (“failed navigation or incomplete content preserves the current resume page”). This is a diagnostic-classification defect, not a test failure. FIX28 excludes test names and informational notices from actionable-error excerpts.
+- FIX28 changes the successful outcome label to `DEPLOYMENT_AND_PROJECT_VERIFY_PASSED_LIVE_ACCEPTANCE_PENDING`, explicitly records live acceptance as pending, and updates the handover to the next real acceptance work.
+- **Next action:** run FIX28 once to verify the corrected outcome/excerpt. Then proceed with TODO-003 Brave clean-profile smoke test, TODO-004 native-helper Windows PowerShell 5.1 test, TODO-005/006 Steam inventory and price acceptance, and TODO-007 storage failure-injection evidence. Do not repeat toolchain installation; Node/npm are now present.
 
 ## Completion dashboard
 
 | Workstream | Status | Exit condition |
 |---|---|---|
-| Launcher / feedback loop | OPEN | Matching build identity + Windows PowerShell 5.1 run + screenshot/clipboard evidence |
-| Local toolchain | BLOCKED pending launcher feedback | Node/npm/Git versions and `npm run verify` evidence |
+| Launcher / feedback loop | DONE | FIX27 and FIX28 consecutive Windows runs; deployed verification and exact text hand-off passed |
+| Local toolchain | IN PROGRESS | Node 26.13.1/npm 11.20.0 and `npm run verify` exit 0 recorded; Git working-tree state remains to be verified |
 | Brave smoke test | OPEN | Clean-profile browser evidence |
 | Native helper | OPEN | Windows PowerShell 5.1 self-test + live native messaging |
 | R2 inventory / price acceptance | OPEN | Every R2 matrix row evidence-backed |

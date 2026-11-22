@@ -1,32 +1,71 @@
 SITE WORKS — ANDREW NEXT TASK
 
 ONE-PASTE FEEDBACK LOOP
-  Run the stable root file: Andrew_next_task.bat
-  Paste the final clipboard screenshot into your next ChatGPT response.
+  Run the stable root file: Andrew_next_task.bat (only when the maintainer
+  has issued a corrected build and explicitly asked for a Windows run).
+  Paste the final clipboard TEXT report into your next ChatGPT response.
   Add any manual requests in ordinary text in the same message.
-  You do not need to interpret the diagnostics.
+
+IMPORTANT
+  A screenshot pasted from the clipboard is only an image. It does not
+  transfer the feedback ZIP or the diagnostic transcript.
+  The normal clipboard hand-off must be plain text and must be verified
+  by reading it back. Screenshots and feedback ZIPs remain local files
+  and are attached only when ChatGPT requests them.
 
 DETAILED CONTRACT
   docs\operations\FEEDBACK_LOOP_CONTRACT.md
   Operator guide: docs\operations\ANDREW_NEXT_TASK.md
   Sole active backlog: docs\PROJECT_TODO.md
 
-CURRENT BLOCKER
-  The last supplied Windows screenshot (2026-11-21) shows a PowerShell
-  parser failure in the generated temporary script: ampersand (&) rejected
-  at line 139, followed by cascading parser errors; exit code 1.
-  This launcher has NOT been repaired or accepted. Do not rerun this known
-  failing build. The next maintainer action is to repair and validate the
-  exact generated payload under Windows PowerShell 5.1.
+CURRENT STATUS — FIX25 WINDOWS RUN
+  Parser preflight passed under Windows PowerShell 5.1. Deployment completed;
+  backup was retained; Robocopy exit codes 1 and 3 were non-fatal. Clipboard
+  text read-back matched and no file-lock warnings appeared. FIX26 adds a
+  post-deployment npm run verify stage and truthful stage-specific outcomes.
+  Run only FIX27 for the next acceptance pass.
 
 EXPECTED HAND-OFF
-  A successful run displays a FINAL FEEDBACK CAPSULE and creates a unique
-  folder under %TEMP%\SiteWorks-Diagnostics\<run-id>\ containing run.txt,
-  run.json, final-screen.png and manifest.sha256. The screenshot must show
-  build/run identity, environment, stage results, exit codes, first failure
-  and log path. Clipboard image presence must be verified by read-back.
+  One clipboard paste must deliver feedback-report.txt as plain text:
+  build/run identity, environment, deployment status, Robocopy and project
+  verification exit codes, first failure, concise excerpts and artifact paths.
+  A unique local run folder retains run.txt, run.json, final-screen.png,
+  screenshots, manifest.sha256 and feedback-bundle.zip where possible.
+  A local path or screenshot is not the same as uploading that archive.
 
 SAFETY
+  Preserve existing clipboard content until the final report is ready.
   No silent installs, Administrator elevation, Git reset/clean/commit/push,
   browser/Steam data changes, or automatic Steam retries after HTTP 429.
-  Preserve user data and redact secrets/account identifiers from evidence.
+  Redact secrets and unnecessary account identifiers.
+
+
+## FIX24 — parser defect repair
+Andrew returned the FIX23 bootstrap's structured Windows PowerShell 5.1 parser report. The first actionable syntax defect was an unterminated single-quoted string in the diagnostic report array: `('USER PROFILE: [REDACTED]),`. FIX24 changes it to `('USER PROFILE: [REDACTED]'),` and adds a regression test for the exact line. The subsequent `WINDOWS:` token, missing parenthesis/brace and `finally` errors were parser cascades from that unterminated string, not independently established defects. Run only the FIX24 archive and return the next plain-text report. Do not declare the launcher accepted until Windows confirms the entire payload parses, the workflow completes or reports a truthful blocked state, clipboard read-back matches, and the report pastes into ChatGPT as text.
+
+
+CURRENT STATUS — FIX26 WINDOWS RUN
+  Deployment and clipboard read-back succeeded. Project verification was not run because Node.js/npm were unavailable. FIX27 offers an explicit opt-in Node.js LTS install and records toolchain status. Run FIX27 and paste the report.
+
+
+### FIX27 evidence / FIX28 hand-off (2026-11-22)
+FIX27 completed deployment and deployed-project verification on Windows PowerShell 5.1: Node v26.13.1, npm 11.20.0, `npm run verify` exit 0, 96/96 tests, 40 JavaScript syntax checks, 125 manifest entries, governance pass and clipboard read-back verified. A passing test title containing “failed” was incorrectly selected as a warning excerpt. FIX28 corrects that filter and distinguishes automated verification from pending live acceptance. Run FIX28 once, then continue TODO-003 through TODO-007; do not reinstall Node.js.
+
+
+CURRENT STATUS — FIX28 WINDOWS ACCEPTANCE
+  FIX27 and FIX28 are two consecutive successful Windows PowerShell 5.1 runs.
+  Deployment, deployed npm run verify, manifest/governance checks and exact
+  plain-text clipboard hand-off passed. TODO-001 launcher/feedback-loop
+  acceptance is DONE. The Site Works application is not yet accepted.
+
+NEXT TASK — TODO-003 BRAVE/CHROMIUM SMOKE TEST
+  Use a clean/test browser profile. Load the unpacked extension and verify
+  build identity, extension errors, popup, Manage, pause/on-off, context menu,
+  keyboard shortcuts, approval/rejection, remembered approval scope and
+  changed-script-hash reapproval. Record browser/version, each result and
+  relevant screenshots. Do not use the production profile as the only test.
+  Node.js v26.13.1 and npm 11.20.0 are already available; do not reinstall.
+
+LIVE ACCEPTANCE REMAINS PENDING
+  TODO-004 native helper; TODO-005/006 Steam inventory and price workflows;
+  TODO-007 storage recovery. R2 release remains blocked until TODO-008.

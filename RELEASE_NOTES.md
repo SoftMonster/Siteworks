@@ -1,3 +1,17 @@
+## 1.6.9 R2 Hotfix 20 — FIX29
+
+- Records the second consecutive successful Windows deployment, project-verification and plain-text feedback hand-off (FIX28), following FIX27.
+- Closes TODO-001 launcher/feedback-loop acceptance and advances the operator hand-off to clean-profile Brave/Chromium live acceptance.
+- Keeps native-helper, Steam inventory/price and storage acceptance explicitly open; R2 is not declared accepted.
+- Documentation and acceptance-backlog update only; no application runtime behaviour changed.
+
+## 1.6.9 R2 Hotfix 20 — FIX24
+
+- Fixed the unterminated PowerShell string in the Andrew Next Task diagnostic report that caused cascading parser errors.
+- Added a launcher regression test for the exact malformed/corrected report entry.
+- Updated launcher build identity and diagnostic handover documentation.
+- Windows PowerShell 5.1 execution and clipboard-to-ChatGPT acceptance remain pending.
+
 # Site Works 1.4.0 — R1: Reliability & Configuration
 
 ## Scope
@@ -350,3 +364,15 @@ Hotfix 8 replaces the unreliable page-inspection logic introduced in Hotfix 6 an
 - Removes duplicate handover documents, obsolete launcher procedure copies, superseded fix notes and a stale checksum snapshot. Historical step records and release notes remain.
 - Adds Andrew's 2026-11-21 Windows PowerShell parser-error screenshot to project evidence and marks TODO-001 BLOCKED. The launcher defect is recorded, not fixed, in this documentation-only change.
 - No application or launcher source code was changed. Offline verification is reported in the FIX20 handover.
+
+
+## FIX22 — Feedback hand-off contract correction
+
+Documentation-only correction following Andrew's screenshot-only clipboard paste. The one-paste channel is now defined as plain-text-only diagnostic report delivery with clipboard read-back verification. Screenshots and feedback ZIPs are local supporting artifacts and require explicit attachment when needed. Launcher implementation and Windows acceptance remain outstanding.
+
+
+## Feedback-loop FIX28 — diagnostic classification
+
+- Corrected the failure excerpt so successful test names and informational npm notices are not presented as actionable warnings.
+- Added an explicit outcome for deployment plus passing automated verification while live acceptance remains pending.
+- Recorded live acceptance as a separate status and updated the canonical backlog and operator hand-off from FIX27 evidence.

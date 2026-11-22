@@ -7,7 +7,7 @@ This directory is the project's documentation system. It is intentionally organi
 1. [`PROJECT_TODO.md`](PROJECT_TODO.md) — **the only active task backlog**. All work status and next-action priority lives here.
 2. [`PROJECT_PROGRESS_LOG.md`](PROJECT_PROGRESS_LOG.md) — concise dated record of completed work and observed blockers.
 3. [`operations/ANDREW_NEXT_TASK.md`](operations/ANDREW_NEXT_TASK.md) — how to run the stable launcher and return evidence.
-4. [`operations/FEEDBACK_LOOP_CONTRACT.md`](operations/FEEDBACK_LOOP_CONTRACT.md) — exact one-paste feedback contract and reliability acceptance gate.
+4. [`operations/FEEDBACK_LOOP_CONTRACT.md`](operations/FEEDBACK_LOOP_CONTRACT.md) — text-first clipboard report contract and reliability acceptance gate.
 4. [`quality/R2_ACCEPTANCE_MATRIX.md`](quality/R2_ACCEPTANCE_MATRIX.md) — authoritative R2 release acceptance checklist.
 
 ## Reference library

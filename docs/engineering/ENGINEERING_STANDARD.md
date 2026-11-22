@@ -76,7 +76,7 @@ npm run helper-selftest
 The helper self-test is not a substitute for Windows PowerShell 5.1 execution. The following remain human-machine acceptance checks when applicable:
 
 - Brave/Chromium extension load and popup/Manage behaviour.
-- Windows PowerShell 5.1 launcher execution and clipboard screenshot verification.
+- Windows PowerShell 5.1 launcher execution and text-first clipboard report verification.
 - Native messaging registration and helper connection.
 - Steam inventory, market response, persistence and UI behaviour.
 - Any live action that could affect inventory, listings, funds or account state.
@@ -101,15 +101,16 @@ If Node.js/npm or Git is missing, record the exact blocked prerequisite. Do not 
 
 The stable launcher is the human-facing continuation mechanism. The detailed evidence schema and acceptance gate are defined in [`../operations/FEEDBACK_LOOP_CONTRACT.md`](../operations/FEEDBACK_LOOP_CONTRACT.md). Every run must:
 
-- identify its own build before running the payload;
-- create a timestamped text transcript;
-- capture screenshots at meaningful pause, test, automation and final handover points;
-- attempt to place the final screenshot on the Windows clipboard and verify the clipboard image;
-- preserve pre-existing clipboard content at startup; clear it only when it is already empty, as previously agreed;
-- report clipboard failure plainly and retain the text log;
-- never claim screenshot capture succeeded unless it verifies the image is present.
+- identify its archive, launcher and embedded payload build IDs;
+- create a timestamped transcript and structured run record;
+- create a self-contained plain-text feedback report containing environment, stages, commands, exit codes and first actionable failure;
+- copy the report as **plain text only** to the Windows clipboard and verify it by reading the text back;
+- preserve pre-existing clipboard content until the final report is ready;
+- save screenshots and the feedback ZIP locally; do not imply that a clipboard paste transfers those files;
+- report clipboard failure plainly and retain the report for manual copy;
+- never claim the hand-off succeeded unless the text report read-back matches the intended report.
 
-Andrew should paste the final clipboard screenshot directly into the next ChatGPT response and may include manual requests in the same message. The development assistant must apply the intake contract, retain relevant evidence in the dated evidence folder, diagnose the earliest failure and update the next package. If clipboard capture fails, a manual screenshot is valid evidence and must not be discarded.
+Andrew pastes the clipboard text directly into the next ChatGPT response and may include manual requests in the same message. A screenshot-only paste is visual evidence, not a complete diagnostic report. The assistant must identify the evidence type, diagnose the earliest failure, request only materially necessary attachments and preserve all manual requests.
 
 Each new archive must retain:
 - root `Andrew_next_task.bat`;
